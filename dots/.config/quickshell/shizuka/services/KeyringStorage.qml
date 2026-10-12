@@ -20,6 +20,10 @@ Singleton {
     property bool loaded: false
     property var keyringData: ({})
     
+    Component.onCompleted: {
+        fetchKeyringData();
+    }
+    
     property var properties: {
         "application": "illogical-impulse",
         "explanation": Translation.tr("For storing API keys and other sensitive information"),
