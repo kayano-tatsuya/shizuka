@@ -9,6 +9,7 @@ import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Io
+import Quickshell.Hyprland
 
 MouseArea {
     id: root
@@ -156,6 +157,19 @@ MouseArea {
             if (GlobalStates.wallpaperSelectorTarget === "lockWall") {
                 Wallpapers.select(filePath, root.useDarkMode, finalPath => {
                     Config.options.background.lockWall = finalPath;
+                    GlobalStates.wallpaperSelectorTarget = "wallpaper";
+                    GlobalStates.wallpaperSelectorOpen = false;
+                });
+            } else if (GlobalStates.wallpaperSelectorTarget === "sddmWall") {
+                Wallpapers.applySddmWallpaper(filePath);
+                GlobalStates.wallpaperSelectorTarget = "wallpaper";
+                GlobalStates.wallpaperSelectorOpen = false;
+            } else if (GlobalStates.wallpaperSelectorTarget === "workspace") {
+                const mon = Hyprland.focusedMonitor?.name ?? "";
+                const ws = Hyprland.focusedMonitor?.activeWorkspace?.id ?? -1;
+                Wallpapers.select(filePath, root.useDarkMode, finalPath => {
+                    if (mon.length > 0 && ws > 0)
+                        WallpaperLibrary.setWorkspaceWallpaper(mon, ws, finalPath);
                     GlobalStates.wallpaperSelectorTarget = "wallpaper";
                     GlobalStates.wallpaperSelectorOpen = false;
                 });
@@ -873,17 +887,13 @@ MouseArea {
         onTriggered: root.ensureThumbnails()
     }
 
-    // This is the hook that actually matters, and it is here rather than in
-    // onWallpaperSelectorOpenChanged because of how the panel is built:
-    // WallpaperSelector.qml holds a Loader whose `active` is `reallyOpen`, so
-    // this component is constructed only once the panel is already opening --
-    // by which time GlobalStates.wallpaperSelectorOpen is true and the open
-    // transition has long since fired. Anything that waits for that transition
-    // therefore never sees it; the only open event this object can observe is
-    // the close. (Verified: instrumenting both hooks showed
-    // "content completed; open=true" followed by only "openChanged open=false".)
-    // The Loader is torn down on close, so this fires exactly once per open,
-    // which is precisely the semantics we want.
+    // First-open thumbnail hook. WallpaperSelector.qml now latches its window
+    // after the first open (`primed`), so this component is constructed exactly
+    // once — on the first open — while GlobalStates.wallpaperSelectorOpen is
+    // already true. The open branch of onWallpaperSelectorOpenChanged above
+    // therefore cannot fire for that first open, so the probe is restarted here.
+    // Subsequent opens are handled by that open branch (the body now stays alive
+    // instead of being torn down on close).
     Component.onCompleted: {
         if (GlobalStates.wallpaperSelectorOpen)
             ensureThumbnailsDebounce.restart();
