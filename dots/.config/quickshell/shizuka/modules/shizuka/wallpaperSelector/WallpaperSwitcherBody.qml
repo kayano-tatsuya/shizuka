@@ -940,7 +940,13 @@ Item {
 
                 // Empty / loading / error states.
                 ColumnLayout {
-                    anchors.centerIn: parent
+                    anchors {
+                        verticalCenter: parent.verticalCenter
+                        left: parent.left
+                        right: parent.right
+                        leftMargin: 24
+                        rightMargin: 24
+                    }
                     spacing: 8
                     visible: root.currentModel.length === 0
 
@@ -952,6 +958,7 @@ Item {
                     }
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
+                        Layout.fillWidth: true
                         visible: !root.stripBusy
                         text: {
                             if (root.online)
@@ -963,6 +970,9 @@ Item {
                                 : Translation.tr("No wallpapers in this category");
                         }
                         color: root.onlineError ? Appearance.colors.colError : Appearance.colors.colSubtext
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.Wrap
+                        maximumLineCount: 3
                     }
                 }
             }
