@@ -538,5 +538,41 @@ Singleton {
         function moveWallpaper(fromIndex: int, toIndex: int): void {
             root.moveWallpaper(fromIndex, toIndex);
         }
+
+        function setSddmWallpaper(path: string): void {
+            root.applySddmWallpaper(path);
+        }
     }
+
+    // ---------------------------------------------------------- SDDM / login
+    // The login greeter (SDDM / plasmalogin) paints its background from the SDDM
+    // theme.conf; we rewrite that one line via pkexec. Guarded on the conf
+    // existing, and the path is configurable since DM/theme layouts vary.
+    property string sddmThemeConf: Config.options.background.sddmThemeConf || "/usr/share/sddm/themes/where_is_my_sddm_theme/theme.conf"
+    property bool sddmThemeAvailable: false
+
+    function refreshSddmAvailability() {
+        if (!sddmCheckProc.running)
+            sddmCheckProc.running = true;
+    }
+
+    property Process sddmCheckProc: Process {
+        command: ["bash", "-c", `test -f '${root.sddmThemeConf}'`]
+        onExited: (code, status) => {
+            root.sddmThemeAvailable = (code === 0);
+        }
+    }
+
+    function applySddmWallpaper(path) {
+        if (!path || path.length === 0)
+            return;
+        Config.options.background.sddmWall = path;
+        // sed replacement: escape backslash, '&' (whole-match), and the '|'
+        // delimiter. A stray '&' would otherwise corrupt the line.
+        const esc = path.replace(/[\\&|]/g, c => "\\" + c);
+        Quickshell.execDetached(["pkexec", "bash", "-c",
+            `conf='${root.sddmThemeConf}'; if [ -f "$conf" ]; then sed -i 's|^background=.*|background=${esc}|' "$conf"; fi`]);
+    }
+
+    Component.onCompleted: root.refreshSddmAvailability()
 }

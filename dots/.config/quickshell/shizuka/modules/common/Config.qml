@@ -126,6 +126,9 @@ Singleton {
                     property bool enableAppsAndShell: true
                     property bool enableQtApps: true
                     property bool enableTerminal: true
+                    property string engine: "cwal" // Allowed: cwal (fast, cwal-only palette), matugen (full matugen template set)
+                    property bool accentBase: false // Neutral base following wallpaper brightness; wallpaper colors become accents
+                    property real baseTint: 0.0 // 0..1 — how much the accent bleeds into the neutral base when accentBase is on
                     property JsonObject terminalGenerationProps: JsonObject {
                         property real harmony: 0.6
                         property real harmonizeThreshold: 100
@@ -238,6 +241,21 @@ Singleton {
 
             property JsonObject background: JsonObject {
                 property string lockWall: ""
+                // Last wallpaper written to the SDDM theme background (via
+                // pkexec); "" until the SDDM target is used once.
+                property string sddmWall: ""
+                // SDDM/plasmalogin greeter theme.conf whose `background=` line
+                // the picker rewrites. Configurable because DM/theme layouts
+                // vary; the UI hides the login target when it is missing.
+                property string sddmThemeConf: "/usr/share/sddm/themes/where_is_my_sddm_theme/theme.conf"
+                // Per-workspace wallpapers. When `enable` is on, a workspace
+                // with a mapped wallpaper (WallpaperLibrary workspace map) paints
+                // its own image; `reTheme` additionally re-runs the color engine
+                // to follow the focused workspace's wallpaper on switch.
+                property JsonObject perWorkspace: JsonObject {
+                    property bool enable: false
+                    property bool reTheme: true
+                }
                 property bool widgetsLocked: false
                 property bool showGrid: true
                 property bool showBlur: false
@@ -877,6 +895,28 @@ Singleton {
             }
             
             property JsonObject wallpaperSelector: JsonObject {
+                // "grid": existing folder-browsing selector. "switcher":
+                // AE-style masonry strip (WallpaperSwitcherBody). Both read the
+                // same apply pipeline; this only swaps the picker UI.
+                property string style: "grid"
+                // Switcher online provider: "local" folders | "wallhaven".
+                property string provider: "local"
+                property int masonryRows: 2
+                property int tileSize: 120
+                // AE-style wallhaven filter form (switcher). Fields mirror
+                // wallhaven.py's CLI; filtered results download into the
+                // wallhaven category and reuse the local apply path.
+                property JsonObject wallhaven: JsonObject {
+                    property string q: ""
+                    property string categories: "111"   // general/anime/people bit-string
+                    property string purity: "100"       // sfw/sketchy/nsfw bit-string
+                    property string sorting: "date_added"
+                    property string order: "desc"
+                    property string topRange: "1M"
+                    property string atleast: ""
+                    property string ratios: ""
+                    property int page: 1
+                }
                 property bool useSystemFileDialog: false
                 property bool showBlurBackground: false
                 property bool showHomePath: true

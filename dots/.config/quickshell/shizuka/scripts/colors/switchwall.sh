@@ -47,6 +47,16 @@ pre_process() {
     fi
 }
 
+# Apply the neutral accent base to the shell palette after an engine writes it.
+# No-op when the Accent base toggle is off (or during a lock re-theme).
+neutralize_palette() {
+    [[ "${accent_base:-0}" -eq 1 ]] || return 0
+    local f="$STATE_DIR/user/generated/colors.json"
+    [[ -f "$f" ]] || return 0
+    python3 "$SCRIPT_DIR/accent-base.py" "${mode_flag:-dark}" "${base_tint:-0}" \
+        < "$f" > "$f.tmp.$$" && mv -f "$f.tmp.$$" "$f" || rm -f "$f.tmp.$$"
+}
+
 post_process() {
     local screen_width="$1"
     local screen_height="$2"
@@ -57,7 +67,12 @@ post_process() {
         return
     fi
 
-    handle_kde_material_you_colors &
+    # The full-matugen engine runs matugen, so its Qt/KDE + pywalfox sinks are
+    # fresh; the cwal engine leaves those at their last matugen values.
+    if [[ "${use_matugen:-0}" -eq 1 ]]; then
+        handle_kde_material_you_colors &
+        "$SCRIPT_DIR/pywalfox-sync-matugen.sh" &
+    fi
     "$SCRIPT_DIR/code/material-code-set-color.sh" &
 }
 
@@ -372,7 +387,17 @@ switch() {
         done
     fi
 
-    matugen "${matugen_args[@]}"
+    # matugen runs for the lock-screen re-theme (--colors_lock, always) and for
+    # the full-matugen engine. The cwal engine skips it: fast-color.sh already
+    # wrote the shell palette.
+    if [[ -n "$colors_lock_flag" || "${use_matugen:-0}" -eq 1 ]]; then
+        matugen "${matugen_args[@]}"
+    fi
+
+    # Accent base (matugen engine only; lock keeps its own palette).
+    if [[ "${use_matugen:-0}" -eq 1 && -z "$colors_lock_flag" ]]; then
+        neutralize_palette
+    fi
 
     if [[ -n "$colors_lock_flag" ]]; then
         if [[ -f "$colors_json_path" ]]; then
@@ -425,6 +450,35 @@ main() {
     }
     get_accent_color_from_config() {
         jq -r '.appearance.palette.accentColor' "$SHELL_CONFIG_FILE" 2>/dev/null || echo ""
+    }
+    get_engine_from_config() {
+        jq -r '.appearance.wallpaperTheming.engine // "cwal"' "$SHELL_CONFIG_FILE" 2>/dev/null || echo "cwal"
+    }
+    get_accent_base_from_config() {
+        jq -r '.appearance.wallpaperTheming.accentBase // false' "$SHELL_CONFIG_FILE" 2>/dev/null || echo "false"
+    }
+    get_base_tint_from_config() {
+        jq -r '.appearance.wallpaperTheming.baseTint // 0' "$SHELL_CONFIG_FILE" 2>/dev/null || echo "0"
+    }
+    get_wallpaper_mode() {
+        # Brightness-based light/dark for the "Accent base" setting: the neutral
+        # base follows the wallpaper, not the system color-scheme.
+        local img="$1"
+        [[ -f "$img" ]] || { echo "dark"; return; }
+        local src="$img"
+        case "${img##*.}" in
+            mp4|webm|mkv|avi|mov)
+                local thumb="$THUMBNAIL_DIR/$(basename "$img").jpg"
+                [[ -f "$thumb" ]] && src="$thumb"
+                ;;
+        esac
+        local mean
+        mean=$(magick "$src[0]" -colorspace Gray -format "%[fx:mean]" info: 2>/dev/null)
+        if [[ -n "$mean" ]] && awk "BEGIN{exit !($mean > 0.5)}"; then
+            echo "light"
+        else
+            echo "dark"
+        fi
     }
     set_accent_color() {
         local color="$1"
@@ -504,6 +558,13 @@ main() {
         color="$config_color"
     fi
 
+    # Color engine: cwal (fast, cwal-only shell palette via fast-color.sh) or
+    # matugen (full template set). Drives the branches below and in switch().
+    use_matugen=0
+    if [[ "$(get_engine_from_config)" == "matugen" ]]; then
+        use_matugen=1
+    fi
+
     if [[ -z "$type_flag" ]]; then
         type_flag="$(get_type_from_config)"
     fi
@@ -535,6 +596,44 @@ main() {
         set_accent_color ""
         color_flag=""
         color=""
+    fi
+
+    # Accent base: when on, the neutral base follows the wallpaper's brightness
+    # (overriding the system mode) and the wallpaper's colors become accents.
+    # Placed after image resolution so the picker/normal flows both honor it.
+    accent_base=0
+    base_tint="$(get_base_tint_from_config)"
+    if [[ "$(get_accent_base_from_config)" == "true" && -z "$colors_lock_flag" && -n "$imgpath" && -f "$imgpath" ]]; then
+        accent_base=1
+        mode_flag="$(get_wallpaper_mode "$imgpath")"
+    fi
+
+    # --- fast cwal palette: tint the running shell immediately (backgrounded
+    # --- so the slower scheme detection / terminal chain below is unaffected).
+    # --- Also applies on --color paths: the picked accent is forwarded so the
+    # --- shell's primary follows the accent instead of the wallpaper.
+    # --- Skipped in the full-matugen engine, where matugen owns the palette.
+    if [[ -n "$imgpath" && -f "$imgpath" && -z "$colors_lock_flag" && "${use_matugen:-0}" -eq 0 ]]; then
+        if [ -f "$SHELL_CONFIG_FILE" ]; then
+            enable_apps_shell_now=$(jq -r '.appearance.wallpaperTheming.enableAppsAndShell' "$SHELL_CONFIG_FILE")
+            if [ "$enable_apps_shell_now" != "false" ]; then
+                if [[ -z "$mode_flag" ]]; then
+                    current_mode_now=$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null | tr -d "'")
+                    if [[ "$current_mode_now" == "prefer-light" ]]; then
+                        fast_mode="light"
+                    else
+                        fast_mode="dark"
+                    fi
+                else
+                    fast_mode="$mode_flag"
+                fi
+                accent_arg=""
+                if [[ -n "$color_flag" ]]; then
+                    accent_arg="$color"
+                fi
+                ( "$SCRIPT_DIR/fast-color.sh" "$imgpath" "$fast_mode" "$accent_arg" >/dev/null 2>&1 & ) || true
+            fi
+        fi
     fi
 
     if [[ "$type_flag" == "auto" ]]; then

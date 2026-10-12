@@ -47,8 +47,10 @@ ShellRoot {
         ConflictKiller.load()
         Cliphist.refresh()
         Wallpapers.load()
+        WallpaperLibrary.start()
         Updates.load()
         LyricsService.restartLyrics()
+        WorkspaceTheming.load()
     }
     
     PanelFamilyLoader {

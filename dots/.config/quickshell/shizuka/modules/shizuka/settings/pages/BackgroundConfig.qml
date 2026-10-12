@@ -68,6 +68,26 @@ ContentPage {
             : path
     }
 
+    // Target for each carousel page, in the same order the model builds them.
+    // Appended conditions keep the existing indices stable when the optional
+    // pages (login / workspace) are off.
+    function wallpaperTargets() {
+        const targets = ["wallpaper", "lockWall"];
+        if (Wallpapers.sddmThemeAvailable)
+            targets.push("sddmWall");
+        if (Config.options.background.perWorkspace.enable)
+            targets.push("workspace");
+        return targets;
+    }
+
+    function focusedWorkspaceWallpaper() {
+        const mon = Hyprland.focusedMonitor?.name ?? "";
+        const ws = Hyprland.focusedMonitor?.activeWorkspace?.id ?? -1;
+        if (mon.length === 0 || ws <= 0)
+            return "";
+        return WallpaperLibrary.workspaceWallpaper(mon, ws);
+    }
+
     Process {
         id: randomWallProc
         property string status: ""
@@ -170,18 +190,30 @@ ContentPage {
                         largeItemWidthRatio: 0.5
                         mediumItemWidthRatio: 0.485
                         itemSpacing: 8
-                        model: [
-                            page.displayPathFor(Config.options.background.wallpaperPath),
-                            page.displayPathFor(
-                                Config.options.background.lockWall !== ""
-                                    ? Config.options.background.lockWall
-                                    : Config.options.background.wallpaperPath
-                            )
-                        ]
+                        model: {
+                            const locks = Config.options.background.lockWall !== ""
+                                ? Config.options.background.lockWall
+                                : Config.options.background.wallpaperPath;
+                            const list = [
+                                page.displayPathFor(Config.options.background.wallpaperPath),
+                                page.displayPathFor(locks)
+                            ];
+                            if (Wallpapers.sddmThemeAvailable) {
+                                const sddm = Config.options.background.sddmWall !== ""
+                                    ? Config.options.background.sddmWall
+                                    : Config.options.background.wallpaperPath;
+                                list.push(page.displayPathFor(sddm));
+                            }
+                            if (Config.options.background.perWorkspace.enable) {
+                                const ws = page.focusedWorkspaceWallpaper();
+                                list.push(page.displayPathFor(ws !== "" ? ws : Config.options.background.wallpaperPath));
+                            }
+                            return list;
+                        }
                         wheelEnabled: false
                         dragEnabled: false
                         clickAction: (index, modelData) => {
-                            GlobalStates.wallpaperSelectorTarget = index === 1 ? "lockWall" : "wallpaper"
+                            GlobalStates.wallpaperSelectorTarget = page.wallpaperTargets()[index] ?? "wallpaper";
                             GlobalStates.wallpaperSelectorOpen = true
                         }
                     }
@@ -229,6 +261,54 @@ ContentPage {
                                 }
                                 StyledText {
                                     text: Translation.tr("Lockscreen")
+                                    font.pixelSize: Appearance.font.pixelSize.normal
+                                    font.weight: Font.Medium
+                                    color: Appearance.colors.colOnLayer1
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            visible: Wallpapers.sddmThemeAvailable
+                            implicitHeight: 24
+                            radius: Appearance.rounding.normal
+                            color: "transparent"
+
+                            RowLayout {
+                                anchors.centerIn: parent
+                                spacing: 8
+                                MaterialSymbol {
+                                    text: "login"
+                                    iconSize: Appearance.font.pixelSize.larger
+                                    color: Appearance.colors.colPrimary
+                                }
+                                StyledText {
+                                    text: Translation.tr("Login screen")
+                                    font.pixelSize: Appearance.font.pixelSize.normal
+                                    font.weight: Font.Medium
+                                    color: Appearance.colors.colOnLayer1
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            visible: Config.options.background.perWorkspace.enable
+                            implicitHeight: 24
+                            radius: Appearance.rounding.normal
+                            color: "transparent"
+
+                            RowLayout {
+                                anchors.centerIn: parent
+                                spacing: 8
+                                MaterialSymbol {
+                                    text: "space_dashboard"
+                                    iconSize: Appearance.font.pixelSize.larger
+                                    color: Appearance.colors.colPrimary
+                                }
+                                StyledText {
+                                    text: Translation.tr("Workspace")
                                     font.pixelSize: Appearance.font.pixelSize.normal
                                     font.weight: Font.Medium
                                     color: Appearance.colors.colOnLayer1
@@ -456,6 +536,25 @@ ContentPage {
                     checked: Config.options.background.showBlur
                     onCheckedChanged: {
                         Config.options.background.showBlur = checked;
+                    }
+                }
+
+                ConfigSwitch {
+                    buttonIcon: "space_dashboard"
+                    text: Translation.tr("Per-workspace wallpapers")
+                    checked: Config.options.background.perWorkspace.enable
+                    onCheckedChanged: {
+                        Config.options.background.perWorkspace.enable = checked;
+                    }
+                }
+
+                ConfigSwitch {
+                    buttonIcon: "palette"
+                    text: Translation.tr("Follow workspace colors")
+                    checked: Config.options.background.perWorkspace.reTheme
+                    enabled: Config.options.background.perWorkspace.enable
+                    onCheckedChanged: {
+                        Config.options.background.perWorkspace.reTheme = checked;
                     }
                 }
 

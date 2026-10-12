@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs
 import qs.services
 import qs.modules.common
@@ -1056,6 +1057,19 @@ ContentPage {
             title: Translation.tr("Wallpaper selector")
 
             GroupedList {
+                ConfigSelectionArray {
+                    icon: "view_quilt"
+                    text: Translation.tr("Picker style")
+                    currentValue: Config.options.wallpaperSelector.style
+                    onSelected: newValue => {
+                        Config.options.wallpaperSelector.style = newValue;
+                    }
+                    options: [
+                        { displayName: Translation.tr("Grid"), icon: "grid_on", value: "grid" },
+                        { displayName: Translation.tr("Switcher"), icon: "view_carousel", value: "switcher" }
+                    ]
+                }
+
                 ConfigSwitch {
                     buttonIcon: "ad"
                     text: Translation.tr('Use system file picker')
@@ -1325,6 +1339,52 @@ ContentPage {
             shape: MaterialShape.Shape.VerySunny
 
             GroupedList {
+                ConfigSelectionArray {
+                    icon: "palette"
+                    text: Translation.tr("Color engine")
+                    currentValue: Config.options.appearance.wallpaperTheming.engine
+                    onSelected: newValue => {
+                        Config.options.appearance.wallpaperTheming.engine = newValue
+                        // Re-theme with the newly selected engine right away.
+                        Quickshell.execDetached(["bash", "-c", `${Directories.wallpaperSwitchScriptPath} --noswitch`])
+                    }
+                    options: [
+                        { displayName: Translation.tr("cwal (fast)"), icon: "bolt", value: "cwal" },
+                        { displayName: Translation.tr("matugen (full)"), icon: "auto_awesome", value: "matugen" }
+                    ]
+                }
+                ConfigSwitch {
+                    buttonIcon: "contrast"
+                    text: Translation.tr("Accent base (wallpaper light/dark)")
+                    checked: Config.options.appearance.wallpaperTheming.accentBase
+                    onCheckedChanged: {
+                        Config.options.appearance.wallpaperTheming.accentBase = checked
+                        // Re-theme right away: on = neutral base whose light/dark
+                        // follows the wallpaper, off = normal generated palette.
+                        Quickshell.execDetached(["bash", "-c", `${Directories.wallpaperSwitchScriptPath} --noswitch`])
+                    }
+                }
+                ConfigSpinBox {
+                    icon: "format_color_fill"
+                    text: Translation.tr("Accent base: tint (%)")
+                    value: Config.options.appearance.wallpaperTheming.baseTint * 100
+                    from: 0
+                    to: 100
+                    stepSize: 5
+                    enabled: Config.options.appearance.wallpaperTheming.accentBase
+                    onValueChanged: {
+                        Config.options.appearance.wallpaperTheming.baseTint = value / 100
+                        accentBaseTintDebounce.restart()
+                    }
+                    Timer {
+                        id: accentBaseTintDebounce
+                        interval: 500
+                        repeat: false
+                        onTriggered: {
+                            Quickshell.execDetached(["bash", "-c", `${Directories.wallpaperSwitchScriptPath} --noswitch`])
+                        }
+                    }
+                }
                 ConfigSwitch {
                     buttonIcon: "hardware"
                     text: Translation.tr("Shell & utilities")

@@ -51,9 +51,20 @@ Variants {
 
         property HyprlandMonitor monitor: Hyprland.monitorFor(modelData)
 
+        // Per-workspace wallpapers: the active workspace id for this monitor,
+        // and its mapped wallpaper (WallpaperLibrary). "" when the feature is
+        // off or this workspace has no mapping (falls back to the global image).
+        readonly property int activeWorkspaceId: bgRoot.monitor?.activeWorkspace?.id ?? -1
+        readonly property string workspaceWallpaperPath: (Config.options.background.perWorkspace.enable
+                && bgRoot.monitor && bgRoot.activeWorkspaceId > 0)
+            ? WallpaperLibrary.workspaceWallpaper(bgRoot.monitor.name, bgRoot.activeWorkspaceId)
+            : ""
+
         property string effectiveWallpaperPath: {
             if (GlobalStates.screenLocked && Config.options.background.lockWall !== "")
                 return Config.options.background.lockWall;
+            if (bgRoot.workspaceWallpaperPath !== "")
+                return bgRoot.workspaceWallpaperPath;
             return Wallpapers.previewPath || Wallpapers.confirmedPath || Config.options.background.wallpaperPath;
         }
 
