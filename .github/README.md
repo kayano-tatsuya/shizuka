@@ -1,6 +1,6 @@
 <div align="center">
     <h1>shizuka</h1>
-    <h3>Hyprland dotfiles, running the <b>shizuka</b> Quickshell shell</h3>
+    <h3>Hyprland dotfiles, running the <b>shizuka</b> (静か) Quickshell shell</h3>
 </div>
 
 <div align="center">
@@ -74,3 +74,15 @@ worth reading if you want a maintained or more general-purpose version:
 The wallpaper selector, booru sidebar, and shell services in particular are
 end-4's and pctrade's work. This repository is a rebrand plus local changes, not
 a from-scratch shell. the authors of the respective dots above deserve their share of credit due, if you like this work, check them out as well.
+
+## Support
+
+If you like this, you can support me here:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/kayanotatsuya)
+
+## 寄付・サポート
+
+気に入っていただけましたら、こちらからサポートしていただけると嬉しいです：
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/kayanotatsuya)
