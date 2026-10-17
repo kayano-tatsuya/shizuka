@@ -15,8 +15,9 @@ import Quickshell.Io
  * Layout contract (see AppMasonry): `imageData` is a plain property and the
  * tile declares an explicit height derived from the image aspect ratio.
  *
- * Left click activates the tile (viewer decides what that means). The hover
- * veil exposes the per-image actions: bookmark, download, open, source, copy.
+ * Left click sets the image as the sidebar waifu. Right click opens the
+ * AE-style detail panel (which exposes the per-image actions: bookmark,
+ * download, open, source, copy, ...). There is no hover menu.
  * NSFW images stay behind a gate unless the viewer says NSFW is allowed.
  */
 Rectangle {
@@ -177,95 +178,19 @@ Rectangle {
         styleColor: ColorUtils.transparentize(Appearance.colors.colLayer0, 0.2)
     }
 
-    // Hover is tracked with a HoverHandler (not the click MouseArea below): a
-    // handler stays "hovered" even when the pointer is over the action buttons
-    // that the veil reveals. Driving the veil from the MouseArea instead makes
-    // it flicker, because each revealed button steals hover from the MouseArea,
-    // hiding the veil again in an endless loop.
-    HoverHandler {
-        id: tileHover
-    }
-
     MouseArea {
         id: mouseArea
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         cursorShape: root.gated ? Qt.ForbiddenCursor : Qt.PointingHandCursor
         onClicked: (mouse) => {
+            if (root.gated) return;
             if (mouse.button === Qt.RightButton) {
-                root.toggleBookmark();
-            } else if (!root.gated) {
+                // Open the AE-style detail panel (all per-image actions live there).
                 root.activate();
-            }
-        }
-    }
-
-    // Hover veil + action row.
-    Rectangle {
-        anchors.fill: parent
-        visible: tileHover.hovered && !root.gated
-        color: ColorUtils.transparentize("#000000", 0.55)
-
-        Flow {
-            anchors.centerIn: parent
-            spacing: 2
-            // Wrap when the tile is too narrow for one row (3–4 column layouts);
-            // an unconstrained width would silently clip the outer buttons.
-            width: Math.min(implicitWidth, parent.width - 8)
-
-            component TileAction: RippleButton {
-                id: action
-                required property string symbol
-                required property string tip
-                signal triggered()
-
-                implicitWidth: 34
-                implicitHeight: 34
-                buttonRadius: Appearance.rounding.full
-                colBackground: "transparent"
-                colBackgroundHover: ColorUtils.transparentize(Appearance.colors.colOnLayer1, 0.8)
-                colRipple: ColorUtils.transparentize(Appearance.colors.colOnLayer1, 0.6)
-                contentItem: MaterialSymbol {
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    text: action.symbol
-                    iconSize: Appearance.font.pixelSize.large
-                    color: Appearance.colors.colOnLayer1
-                }
-                onClicked: action.triggered()
-                StyledToolTip { text: action.tip }
-            }
-
-            TileAction {
-                symbol: root.isWaifu ? "favorite" : "favorite_border"
-                tip: root.isWaifu ? Translation.tr("Unset sidebar waifu") : Translation.tr("Set as sidebar waifu")
-                onTriggered: root.setWaifu()
-            }
-            TileAction {
-                symbol: root.bookmarked ? "bookmark_added" : "bookmark_add"
-                tip: root.bookmarked ? Translation.tr("Remove bookmark") : Translation.tr("Bookmark")
-                onTriggered: root.toggleBookmark()
-            }
-            TileAction {
-                symbol: "download"
-                tip: Translation.tr("Download")
-                onTriggered: root.download()
-            }
-            TileAction {
-                symbol: "open_in_new"
-                tip: Translation.tr("Open image")
-                onTriggered: root.openUrl(root.effectiveUrl)
-            }
-            TileAction {
-                symbol: "link"
-                tip: Translation.tr("Go to source")
-                visible: (root.imageData?.source ?? "").length > 0
-                onTriggered: root.openUrl(root.imageData.source)
-            }
-            TileAction {
-                symbol: "content_copy"
-                tip: Translation.tr("Copy image link")
-                onTriggered: Quickshell.clipboardText = root.effectiveUrl
+            } else {
+                // Left click = set/unset as the sidebar waifu.
+                root.setWaifu();
             }
         }
     }
