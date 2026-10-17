@@ -24,10 +24,12 @@ Rectangle {
 
     property var imageData
     property bool bookmarked: false
+    property bool isWaifu: false
     property bool allowNsfw: false
 
     signal activate()
     signal toggleBookmark()
+    signal setWaifu()
 
     readonly property bool isVideo: ["mp4", "webm", "mkv", "gif"].includes(((imageData?.file_ext) || "").toLowerCase())
     readonly property bool gated: (imageData?.is_nsfw ?? false) && !root.allowNsfw
@@ -160,6 +162,21 @@ Rectangle {
         styleColor: ColorUtils.transparentize(Appearance.colors.colLayer0, 0.2)
     }
 
+    // Always-visible marker when this image is the right-sidebar waifu.
+    MaterialSymbol {
+        visible: root.isWaifu
+        anchors {
+            top: parent.top
+            left: parent.left
+            margins: 6
+        }
+        text: "favorite"
+        iconSize: Appearance.font.pixelSize.large
+        color: Appearance.colors.colPrimary
+        style: Text.Outline
+        styleColor: ColorUtils.transparentize(Appearance.colors.colLayer0, 0.2)
+    }
+
     // Hover is tracked with a HoverHandler (not the click MouseArea below): a
     // handler stays "hovered" even when the pointer is over the action buttons
     // that the veil reveals. Driving the veil from the MouseArea instead makes
@@ -189,9 +206,12 @@ Rectangle {
         visible: tileHover.hovered && !root.gated
         color: ColorUtils.transparentize("#000000", 0.55)
 
-        RowLayout {
+        Flow {
             anchors.centerIn: parent
             spacing: 2
+            // Wrap when the tile is too narrow for one row (3–4 column layouts);
+            // an unconstrained width would silently clip the outer buttons.
+            width: Math.min(implicitWidth, parent.width - 8)
 
             component TileAction: RippleButton {
                 id: action
@@ -216,6 +236,11 @@ Rectangle {
                 StyledToolTip { text: action.tip }
             }
 
+            TileAction {
+                symbol: root.isWaifu ? "favorite" : "favorite_border"
+                tip: root.isWaifu ? Translation.tr("Unset sidebar waifu") : Translation.tr("Set as sidebar waifu")
+                onTriggered: root.setWaifu()
+            }
             TileAction {
                 symbol: root.bookmarked ? "bookmark_added" : "bookmark_add"
                 tip: root.bookmarked ? Translation.tr("Remove bookmark") : Translation.tr("Bookmark")

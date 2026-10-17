@@ -7,15 +7,15 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Hyprland
 
 /**
  * AE-style booru browser for the left sidebar.
  *
  * Loads images immediately (no tag required), supports provider switching,
- * tag search with autocomplete, masonry display, pagination, NSFW gating and
- * per-image bookmarks. All networking lives in the `Booru` service; this file
- * is presentation + paging state only.
+ * tag search with autocomplete, masonry display, pagination, NSFW gating,
+ * per-image bookmarks and an AE-style detail panel that opens in a side popup
+ * when a tile is clicked. All networking lives in the `Booru` service; this
+ * file is presentation + paging state only.
  */
 Item {
     id: root
@@ -29,6 +29,9 @@ Item {
     property bool loading: false
     property int pendingPage: 1
     property bool settingsOpen: false
+
+    // The image whose detail card is open in the side popup, or null.
+    property var detailImage: null
 
     property var suggestionList: []
     property string suggestionQuery: ""
@@ -80,6 +83,31 @@ Item {
             next.unshift(Object.assign({}, image, { provider: root.provider }));
         }
         Persistent.states.booru.bookmarks = next;
+    }
+
+    // ---- detail panel (AE-style side popup) ------------------------------
+    function openDetail(image) {
+        if (!image) return;
+        root.detailImage = image;
+    }
+    function closeDetail() {
+        root.detailImage = null;
+    }
+    // Toggle the sidebar waifu from the grid/detail. `Waifu` owns the state.
+    function toggleWaifu(image) {
+        if (!image) return;
+        if (Waifu.isCurrent(image)) Waifu.clearWaifu();
+        else Waifu.setWaifu(image);
+    }
+    // A tag chip in the detail panel was clicked: add it to the search and run.
+    function activateTag(tag) {
+        if (!tag || tag.length === 0) return;
+        const parts = root.tagText.trim().split(/\s+/).filter(part => part.length > 0);
+        if (parts.indexOf(tag) === -1) parts.push(tag);
+        root.tagText = parts.join(" ") + " ";
+        tagField.text = root.tagText;
+        root.closeDetail();
+        root.load(true);
     }
 
     // ---- tag autocomplete ------------------------------------------------
@@ -454,8 +482,10 @@ Item {
                             imageData: modelData
                             allowNsfw: root.allowNsfw
                             bookmarked: root.isBookmarked(modelData)
-                            onActivate: root.openImage(modelData)
+                            isWaifu: Waifu.isCurrent(modelData)
+                            onActivate: root.openDetail(modelData)
                             onToggleBookmark: root.toggleBookmark(modelData)
+                            onSetWaifu: root.toggleWaifu(modelData)
                         }
                     }
 
@@ -539,12 +569,52 @@ Item {
         }
     }
 
-    function openImage(image) {
-        if (!image) return;
-        const url = image.file_url ?? image.sample_url;
-        if (!url) return;
-        Hyprland.dispatch("hl.config({cursor = {no_warps = true}})");
-        Qt.openUrlExternally(url);
-        Hyprland.dispatch("hl.config({cursor = {no_warps = false}})");
+    // ---- detail side panel (AE-style popup window) ----------------------
+    // Closes itself when the sidebar hides or the booru tab is left, so an
+    // orphan card can never outlive the surface it is docked to.
+    readonly property bool booruActive: SwipeView.isCurrentItem
+    onBooruActiveChanged: if (!root.booruActive) root.closeDetail()
+
+    Connections {
+        target: GlobalStates
+        function onSidebarLeftOpenChanged() {
+            if (!GlobalStates.sidebarLeftOpen) root.closeDetail();
+        }
+    }
+
+    // A separate Wayland popup surface docked just past the sidebar's right
+    // edge, so a clicked image opens beside the grid instead of launching an
+    // external viewer. `PopupAdjustment.None` keeps it docked where we put it
+    // rather than letting the compositor slide it back over the sidebar.
+    PopupWindow {
+        id: detailPopup
+        visible: root.detailImage !== null && GlobalStates.sidebarLeftOpen
+        color: "transparent"
+        implicitWidth: 300
+        implicitHeight: Math.max(160, root.height)
+        anchor {
+            window: root.QsWindow.window
+            item: root
+            adjustment: PopupAdjustment.None
+            rect: Qt.rect(root.width - 4, 0, 1, root.height)
+            edges: Edges.Top | Edges.Left
+            gravity: Edges.Bottom | Edges.Right
+        }
+        StyledRectangularShadow {
+            target: detailCard
+        }
+        BooruDetail {
+            id: detailCard
+            anchors.fill: parent
+            anchors.margins: Appearance.sizes.elevationMargin
+            image: root.detailImage
+            allowNsfw: root.allowNsfw
+            bookmarked: root.isBookmarked(root.detailImage)
+            isWaifu: Waifu.isCurrent(root.detailImage)
+            onCloseRequested: root.closeDetail()
+            onToggleBookmarkRequested: root.toggleBookmark(root.detailImage)
+            onSetWaifuRequested: root.toggleWaifu(root.detailImage)
+            onTagActivated: (tag) => root.activateTag(tag)
+        }
     }
 }
