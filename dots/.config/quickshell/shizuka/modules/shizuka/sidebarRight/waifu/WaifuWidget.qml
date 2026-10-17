@@ -52,12 +52,12 @@ Item {
     // Read by the banner container (see SidebarRightContent) to size itself.
     implicitHeight: Math.round(root.desiredHeight)
 
-    // Fetches only when there is genuinely nothing to show (e.g. the waifu was
-    // switched on after boot). At startup the service's own fetch wins, and
-    // this is a no-op.
+    // Asks the service to show the pinned waifu or fetch a first one. The
+    // service owns the "is there anything to show yet" decision (and waits for
+    // Persistent to load), so the widget only nudges it on becoming visible.
     function ensureImage() {
-        if (root.visible && Waifu.current === null && !Waifu.loading)
-            Waifu.refresh();
+        if (root.visible)
+            Waifu.ensureLoaded();
     }
     Component.onCompleted: root.ensureImage()
     onVisibleChanged: root.ensureImage()

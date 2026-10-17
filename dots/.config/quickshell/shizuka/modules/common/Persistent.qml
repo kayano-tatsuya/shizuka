@@ -81,6 +81,16 @@ Singleton {
                 property list<var> bookmarks: []
             }
 
+            property JsonObject waifu: JsonObject {
+                // The waifu pinned to the right-sidebar banner (a mapped booru
+                // image object), or null while nothing has been pinned. Kept in
+                // a one-element list rather than a bare `var` because `list<var>`
+                // is the proven serialisable shape here (see booru.bookmarks).
+                // Persisting it is what stops the banner re-randomising on every
+                // shell reload.
+                property list<var> pinned: []
+            }
+
             property JsonObject idle: JsonObject {
                 property bool inhibit: false
             }

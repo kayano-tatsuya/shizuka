@@ -33,6 +33,69 @@ Singleton {
     // churn that happens while the config is still loading.
     property string activeProvider: ""
 
+    // ---- Persistence -----------------------------------------------------
+
+    // The stored waifu (a mapped image object) or null when none has been
+    // pinned. Kept as a one-element list in Persistent (see its comment).
+    function pinnedImage() {
+        const list = Persistent.states.waifu.pinned ?? [];
+        return list.length > 0 ? list[0] : null;
+    }
+
+    function _persist(image) {
+        if (!image) return;
+        try {
+            // Deep-clone so the adapter stores plain JSON instead of a live
+            // object that could keep changing under it.
+            Persistent.states.waifu.pinned = [JSON.parse(JSON.stringify(image))];
+        } catch (e) {
+            console.log("[Waifu] Could not persist waifu: " + e);
+        }
+    }
+
+    /**
+     * Pin the given image as the sidebar waifu and show it immediately. This is
+     * what the booru viewer's "set as waifu" action calls.
+     */
+    function setWaifu(image) {
+        if (!image) return;
+        root.current = image;
+        root._persist(image);
+    }
+
+    function clearWaifu() {
+        root.current = null;
+        Persistent.states.waifu.pinned = [];
+    }
+
+    /**
+     * True when `image` is the waifu currently on display. Compares by file URL
+     * when both sides have one (ids are only unique within a provider), and
+     * falls back to the id otherwise.
+     */
+    function isCurrent(image) {
+        const w = root.current;
+        if (!w || !image) return false;
+        if (w.file_url && image.file_url) return String(w.file_url) === String(image.file_url);
+        return String(w.id) === String(image.id);
+    }
+
+    /**
+     * Show the pinned waifu once Persistent is ready, or fetch a random one if
+     * nothing has ever been pinned. Safe to call repeatedly and only ever acts
+     * on an empty banner, so callers (the widget's onVisible, a config change)
+     * cannot race a fetch over an image that is already showing.
+     */
+    function ensureLoaded() {
+        if (root.current !== null || root.loading || !Persistent.ready) return;
+        const pinned = root.pinnedImage();
+        if (pinned) {
+            root.current = pinned;
+            return;
+        }
+        if (root.enabled) root.refresh();
+    }
+
     /**
      * Fetch a fresh batch and keep one at random. Calls while a request is in
      * flight are ignored so mashing "refresh" can neither queue requests nor
@@ -77,6 +140,7 @@ Singleton {
                     return;
                 }
                 root.current = images[Math.floor(Math.random() * images.length)];
+                root._persist(root.current);
             } catch (e) {
                 root.errorMessage = String(e);
                 console.log("[Waifu] Failed to parse response: " + e);
@@ -91,14 +155,22 @@ Singleton {
         }
     }
 
-    // Single startup fetch. The widget asks again later only if it is switched
-    // on with nothing to show (see WaifuWidget.ensureImage), which keeps this
-    // independent of the order in which the config settles.
-    Component.onCompleted: if (root.enabled) root.refresh()
+    // Restore the pinned waifu (or fetch a first one) once Persistent is ready.
+    // Waiting for readiness — rather than fetching blindly on completion — is
+    // what keeps the banner static across reloads: the async states file is not
+    // guaranteed to have loaded by Component.onCompleted.
+    Component.onCompleted: root.ensureLoaded()
+
+    Connections {
+        target: Persistent
+        function onReadyChanged() { root.ensureLoaded(); }
+    }
+
+    onEnabledChanged: if (root.enabled) root.ensureLoaded()
 
     // A provider switch (config edit) should show a fresh image. Guarded so the
     // startup churn — where `provider` is read before the config has loaded —
-    // cannot fire a second request.
+    // cannot fire a second request (and so cannot clobber a restored waifu).
     onProviderChanged: {
         if (root.activeProvider === "" || root.activeProvider === root.provider) return;
         root.refresh();
