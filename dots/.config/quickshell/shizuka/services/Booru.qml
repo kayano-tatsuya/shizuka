@@ -487,8 +487,14 @@ Singleton {
 
         var xhr = new XMLHttpRequest()
         xhr.open("GET", url)
+        // Guard against a hung request so the viewer's spinner can never stay
+        // up forever ("infinitely loading").
+        xhr.timeout = 20000
+        var requestFinished = false
         xhr.onreadystatechange = function() {
+            if (requestFinished) return;
             if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                requestFinished = true;
                 try {
                     // console.log("[Booru] Raw response: " + xhr.responseText)
                     const p = provider
@@ -520,11 +526,23 @@ Singleton {
                 }
             }
             else if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (requestFinished) return;
+                requestFinished = true;
                 console.log("[Booru] Request failed with status: " + xhr.status)
                 newResponse.message = root.failMessage
-                root.runningRequests--;
+                root.runningRequests = Math.max(0, root.runningRequests - 1)
                 root.responses = [...root.responses, newResponse]
             }
+            root.responseFinished()
+        }
+
+        xhr.ontimeout = function() {
+            if (requestFinished) return;
+            requestFinished = true;
+            console.log("[Booru] Request timed out for " + provider)
+            newResponse.message = root.failMessage
+            root.runningRequests = Math.max(0, root.runningRequests - 1)
+            root.responses = [...root.responses, newResponse]
             root.responseFinished()
         }
 
@@ -562,6 +580,7 @@ Singleton {
         var xhr = new XMLHttpRequest()
         currentTagRequest = xhr
         xhr.open("GET", url)
+        xhr.timeout = 15000
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
                 currentTagRequest = null

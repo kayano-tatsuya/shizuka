@@ -49,14 +49,18 @@ Item {
         return t.length ? t.split(/\s+/) : [];
     }
 
-    function load(reset) {
+    function load(reset, nsfwOverride) {
         if (reset) root.page = 1;
         root.pendingPage = root.page;
         root.loading = true;
         root.message = "";
         root.images = [];
         Booru.clearResponses();
-        Booru.makeRequest(root.tagList(), root.allowNsfw, root.limit, root.page);
+        // Allow callers (e.g. the NSFW toggle) to pass the intended value
+        // explicitly, so a stale property binding can't make the request use
+        // the previous NSFW setting.
+        const nsfw = (nsfwOverride === undefined) ? root.allowNsfw : nsfwOverride;
+        Booru.makeRequest(root.tagList(), nsfw, root.limit, root.page);
     }
 
     function setProvider(p) {
@@ -289,8 +293,9 @@ Item {
                 colBackgroundToggled: Appearance.colors.colErrorContainer
                 colBackgroundToggledHover: Appearance.colors.colErrorContainerHover
                 onClicked: {
-                    Persistent.states.booru.allowNsfw = !root.allowNsfw;
-                    root.load(true);
+                    const next = !root.allowNsfw;
+                    Persistent.states.booru.allowNsfw = next;
+                    root.load(true, next);
                 }
                 contentItem: MaterialSymbol {
                     horizontalAlignment: Text.AlignHCenter

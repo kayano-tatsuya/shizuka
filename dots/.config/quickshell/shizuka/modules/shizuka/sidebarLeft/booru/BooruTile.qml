@@ -75,7 +75,7 @@ Rectangle {
         // `[ -s file ]` rejects partial/empty downloads so a failed fetch never
         // looks like a successful one.
         thumbFetch.command = ["bash", "-c",
-            `mkdir -p '${dir}' && { [ -s '${file}' ] || curl -fsSL -H 'Referer: ${referer}'${uaArg} '${url}' -o '${file}'; } && [ -s '${file}' ]`]
+            `mkdir -p '${dir}' && { [ -s '${file}' ] || curl -fsSL --max-time 15 -H 'Referer: ${referer}'${uaArg} '${url}' -o '${file}'; } && [ -s '${file}' ]`]
         thumbFetch.running = true;
     }
 

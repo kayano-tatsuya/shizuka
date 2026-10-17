@@ -242,6 +242,27 @@ Rectangle {
                 sourceSize.width: Math.max(1, width) * 2
             }
 
+            // Loading / failure feedback so a slow (or stalled) preview never
+            // reads as "infinitely loading": the StyledImage fades in only once
+            // it is Ready, so without this the area looks blank in the meantime.
+            ColumnLayout {
+                anchors.centerIn: parent
+                spacing: 4
+                visible: !root.gated && preview.status !== Image.Ready && root.displayUrl.length > 0
+                MaterialLoadingIndicator {
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: preview.status === Image.Loading || preview.status === Image.Null
+                    implicitSize: 32
+                }
+                StyledText {
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: preview.status === Image.Error
+                    text: Translation.tr("Failed to load image")
+                    color: Appearance.colors.colOnLayer1
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                }
+            }
+
             // NSFW gate, matching the grid tile: no decoding of the real image.
             Rectangle {
                 anchors.fill: parent
