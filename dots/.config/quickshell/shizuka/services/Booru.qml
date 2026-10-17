@@ -29,7 +29,7 @@ Singleton {
             "api": "https://yande.re/post.json",
             "description": Translation.tr("All-rounder | Good quality, decent quantity"),
             "mapFunc": (response) => {
-                return response.map(item => {
+                return asArray(response).map(item => {
                     return {
                         "id": item.id,
                         "width": item.width,
@@ -49,7 +49,7 @@ Singleton {
             },
             "tagSearchTemplate": "https://yande.re/tag.json?order=count&limit=10&name={{query}}*",
             "tagMapFunc": (response) => {
-                return response.map(item => {
+                return asArray(response).map(item => {
                     return {
                         "name": item.name,
                         "count": item.count
@@ -63,7 +63,7 @@ Singleton {
             "api": "https://konachan.net/post.json",
             "description": Translation.tr("For desktop wallpapers | Good quality"),
             "mapFunc": (response) => {
-                return response.map(item => {
+                return asArray(response).map(item => {
                     return {
                         "id": item.id,
                         "width": item.width,
@@ -83,7 +83,7 @@ Singleton {
             },
             "tagSearchTemplate": "https://konachan.net/tag.json?order=count&limit=10&name={{query}}*",
             "tagMapFunc": (response) => {
-                return response.map(item => {
+                return asArray(response).map(item => {
                     return {
                         "name": item.name,
                         "count": item.count
@@ -98,13 +98,13 @@ Singleton {
             "description": Translation.tr("Clean stuff | Excellent quality, no NSFW"),
             "mapFunc": (response) => {
                 response = response.items
-                return response.map(item => {
+                return asArray(response).map(item => {
                     return {
                         "id": item.id,
                         "width": item.width,
                         "height": item.height,
                         "aspect_ratio": item.width / item.height,
-                        "tags": item.tags.join(" "),
+                        "tags": (item.tags ?? []).join(" "),
                         "rating": "safe", // Zerochan doesn't have nsfw
                         "is_nsfw": false,
                         "md5": item.md5,
@@ -124,7 +124,7 @@ Singleton {
             "api": "https://danbooru.donmai.us/posts.json",
             "description": Translation.tr("The popular one | Best quantity, but quality can vary wildly"),
             "mapFunc": (response) => {
-                return response.map(item => {
+                return asArray(response).map(item => {
                     return {
                         "id": item.id,
                         "width": item.image_width,
@@ -144,7 +144,7 @@ Singleton {
             },
             "tagSearchTemplate": "https://danbooru.donmai.us/tags.json?limit=10&search[name_matches]={{query}}*",
             "tagMapFunc": (response) => {
-                return response.map(item => {
+                return asArray(response).map(item => {
                     return {
                         "name": item.name,
                         "count": item.post_count
@@ -156,33 +156,76 @@ Singleton {
             "name": "Gelbooru",
             "url": "https://gelbooru.com",
             "api": "https://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1",
+            // Its image CDN rejects hotlinks without this Referer (302 →
+            // hotlink.php → HTML), and QML's Image cannot send request headers.
+            "imageReferer": "https://gelbooru.com/",
             "description": Translation.tr("The hentai one | Great quantity, a lot of NSFW, quality varies wildly"),
             "mapFunc": (response) => {
-                response = response.post
-                return response.map(item => {
+                // Gelbooru wraps results in `post` and omits that key entirely
+                // when a query has no matches, so it must not be assumed to be
+                // an array.
+                return asArray(response.post).map(item => {
+                    const rating = String(item.rating ?? "").toLowerCase();
+                    const ratingCode = (rating === "general" || rating === "sensitive") ? "s"
+                        : (rating === "questionable" ? "q" : "e");
                     return {
                         "id": item.id,
                         "width": item.width,
                         "height": item.height,
                         "aspect_ratio": item.width / item.height,
                         "tags": item.tags,
-                        "rating": item.rating.replace('general', 's').charAt(0),
-                        "is_nsfw": (item.rating != 's'),
+                        "rating": ratingCode,
+                        "is_nsfw": ratingCode !== "s",
                         "md5": item.md5,
                         "preview_url": item.preview_url,
                         "sample_url": item.sample_url ?? item.file_url,
                         "file_url": item.file_url,
-                        "file_ext": item.file_url.split('.').pop(),
+                        // Gelbooru's JSON has no file_ext field
+                        "file_ext": item.file_ext ?? String(item.file_url ?? "").split('.').pop(),
                         "source": getWorkingImageSource(item.source) ?? item.file_url,
                     }
                 })
             },
             "tagSearchTemplate": "https://gelbooru.com/index.php?page=dapi&s=tag&q=index&json=1&orderby=count&limit=10&name_pattern={{query}}%",
             "tagMapFunc": (response) => {
-                return response.tag.map(item => {
+                return asArray(response.tag).map(item => {
                     return {
                         "name": item.name,
                         "count": item.count
+                    }
+                })
+            }
+        },
+        "safebooru": {
+            "name": "Safebooru",
+            "url": "https://safebooru.donmai.us",
+            "api": "https://safebooru.donmai.us/posts.json",
+            "description": Translation.tr("Safe only | Danbooru quality without the NSFW"),
+            "mapFunc": (response) => {
+                return asArray(response).map(item => {
+                    return {
+                        "id": item.id,
+                        "width": item.image_width,
+                        "height": item.image_height,
+                        "aspect_ratio": item.image_width / item.image_height,
+                        "tags": item.tag_string,
+                        "rating": item.rating,
+                        "is_nsfw": (item.rating != 's' && item.rating != 'g'),
+                        "md5": item.md5,
+                        "preview_url": item.preview_file_url,
+                        "sample_url": item.file_url ?? item.large_file_url,
+                        "file_url": item.large_file_url,
+                        "file_ext": item.file_ext,
+                        "source": getWorkingImageSource(item.source) ?? item.file_url,
+                    }
+                })
+            },
+            "tagSearchTemplate": "https://safebooru.donmai.us/tags.json?limit=10&search[name_matches]={{query}}*",
+            "tagMapFunc": (response) => {
+                return asArray(response).map(item => {
+                    return {
+                        "name": item.name,
+                        "count": item.post_count
                     }
                 })
             }
@@ -194,13 +237,13 @@ Singleton {
             "description": Translation.tr("Waifus only | Excellent quality, limited quantity"),
             "mapFunc": (response) => {
                 response = response.items
-                return response.map(item => {
+                return asArray(response).map(item => {
                     return {
                         "id": item.id,
                         "width": item.width,
                         "height": item.height,
                         "aspect_ratio": item.width / item.height,
-                        "tags": item.tags.map(tag => {return tag.name}).join(" "),
+                        "tags": (item.tags ?? []).map(tag => {return tag.name}).join(" "),
                         "rating": item.isNsfw ? "e" : "s",
                         "is_nsfw": item.isNsfw,
                         "md5": item.md5,
@@ -214,7 +257,7 @@ Singleton {
             },
             "tagSearchTemplate": "https://api.waifu.im/tags?Name={{query}}",
             "tagMapFunc": (response) => {
-                return response.items.map(item => {return {"name": item.name}})
+                return asArray(response.items).map(item => {return {"name": item.name}})
             }
         },
         "t.alcy.cc": {
@@ -250,7 +293,7 @@ Singleton {
             ],
             "manualParseFunc": (responseText) => {
                 // Alcy just returns image links, each on a new line
-                const lines = responseText.trim().split('\n');
+                const lines = responseText.trim().split('\n').filter(line => line.length > 0);
                 return lines.map(line => {
                     return {
                         "id": Qt.md5(line),
@@ -273,6 +316,19 @@ Singleton {
         }
     }
     property var currentProvider: Persistent.states.booru.provider
+
+    /**
+     * Coerce an API payload into an array. Providers sometimes omit the list
+     * key entirely when a query has no results (e.g. Gelbooru returns only
+     * `@attributes`), or return a single object instead of a list — either
+     * would otherwise crash the mapper with ".map of undefined".
+     */
+    function asArray(value) {
+        if (value === undefined || value === null) return [];
+        if (Array.isArray(value)) return value;
+        if (typeof value === "object") return [value];
+        return [];
+    }
 
     function getWorkingImageSource(url) {
         if (url?.includes('pximg.net')) {
@@ -306,35 +362,41 @@ Singleton {
         })]
     }
 
-    function constructRequestUrl(tags, nsfw=true, limit=20, page=1) {
-        var provider = providers[currentProvider]
-        var baseUrl = provider.api
+    function constructRequestUrl(tags, nsfw=true, limit=20, page=1, provider) {
+        if (provider === undefined) provider = currentProvider;
+        var baseUrl = providers[provider].api
         var url = baseUrl
-        var tagString = tags.join(" ")
-        if (!nsfw && !(["zerochan", "waifu.im", "t.alcy.cc"].includes(currentProvider))) {
-            if (currentProvider == "gelbooru") 
-                tagString += " rating:general";
-            else 
-                tagString += " rating:safe";
+        var tagString = tags.join(" ").trim()
+        if (!nsfw && !(["zerochan", "waifu.im", "t.alcy.cc"].includes(provider))) {
+            // Moebooru (yande.re/Konachan) uses rating:safe; Danbooru-family
+            // (Danbooru/Safebooru) and Gelbooru use rating:general. Using the
+            // wrong tag silently returns zero posts. Append without leaving a
+            // leading space, which some providers reject.
+            const ratingTag = ["yandere", "konachan"].includes(provider) ? "rating:safe" : "rating:general";
+            tagString = tagString.length > 0 ? (tagString + " " + ratingTag) : ratingTag;
         }
         var params = []
         // Tags & limit
-        if (currentProvider === "zerochan") {
-            params.push("c=" + tagString) // zerochan doesn't have search in api, so we use color
+        if (provider === "zerochan") {
+            params.push("c=" + tagString)
             params.push("l=" + limit)
             params.push("s=" + "fav")
             params.push("t=" + 1)
             params.push("p=" + page)
         }
-        else if (currentProvider === "waifu.im") {
-            var tagsArray = tagString.split(" ");
+        else if (provider === "waifu.im") {
+            // waifu.im answers HTTP 400 when IncludedTags is present but empty,
+            // so only send the tags that are actually set (none = any image).
+            const tagsArray = tagString.length > 0
+                ? tagString.split(" ").filter(tag => tag.length > 0)
+                : [];
             tagsArray.forEach(tag => {
                 params.push("IncludedTags=" + encodeURIComponent(tag.toLowerCase()));
             });
-            params.push("PageSize=" + Math.min(limit, 30)) // Only admin can do > 30
-            params.push("IsNsfw=" + (nsfw ? "All" : "False")) // null is random
+            params.push("PageSize=" + Math.min(limit, 30))
+            params.push("IsNsfw=" + (nsfw ? "All" : "False"))
         }
-        else if (currentProvider === "t.alcy.cc") {
+        else if (provider === "t.alcy.cc") {
             url += tagString
             params.push("json")
             params.push("quantity=" + limit)
@@ -342,13 +404,14 @@ Singleton {
         else {
             params.push("tags=" + encodeURIComponent(tagString))
             params.push("limit=" + limit)
-            if (currentProvider == "gelbooru") {
+            if (provider == "gelbooru") {
                 params.push("pid=" + page)
             }
             else {
                 params.push("page=" + page)
             }
         }
+        params.push(...root.authParams(provider))
         if (baseUrl.indexOf("?") === -1) {
             url += "?" + params.join("&")
         } else {
@@ -357,12 +420,65 @@ Singleton {
         return url
     }
 
-    function makeRequest(tags, nsfw=false, limit=20, page=1) {
-        var url = constructRequestUrl(tags, nsfw, limit, page)
+    /**
+     * Credentials from the keyring, keyed by provider (see ApiKeyField /
+     * the "API keys" settings page). Only used by providers that support
+     * authentication; empty when unset so anonymous requests still work.
+     */
+    readonly property var apiKeys: KeyringStorage.keyringData?.apiKeys ?? {}
+
+    /**
+     * Pull a named value out of a credential string. Providers like Gelbooru
+     * show the credentials as one query fragment, e.g.
+     *   "&api_key=XXXX&user_id=1234"
+     * so people paste the whole thing into a single field. Returns "" when the
+     * parameter is not present (so a bare value can be used as-is instead).
+     */
+    function extractQueryParam(value, name) {
+        if (value === undefined || value === null) return "";
+        const s = String(value).trim();
+        if (s.length === 0) return "";
+        const match = s.match(new RegExp("[?&]?" + name + "=([^&\\s]+)"));
+        return match ? decodeURIComponent(match[1]) : "";
+    }
+
+    function authParams(provider) {
+        if (provider === undefined) provider = currentProvider;
+        const out = []
+        if (provider === "danbooru") {
+            const rawUser = String(root.apiKeys?.danbooru?.user ?? "").trim()
+            const rawKey = String(root.apiKeys?.danbooru?.key ?? "").trim()
+            const user = root.extractQueryParam(rawUser, "login") || rawUser
+            const key = root.extractQueryParam(rawKey, "api_key") || rawKey
+            if (user && key) {
+                out.push("login=" + encodeURIComponent(user))
+                out.push("api_key=" + encodeURIComponent(key))
+            }
+        } else if (provider === "gelbooru") {
+            const rawUser = String(root.apiKeys?.gelbooru?.user ?? "").trim()
+            const rawKey = String(root.apiKeys?.gelbooru?.key ?? "").trim()
+            // Accept either the bare key or a pasted "?api_key=...&user_id=..."
+            // fragment. Gelbooru wants the *numeric* user id, which is often only
+            // available inside that fragment, so prefer it when present.
+            const key = root.extractQueryParam(rawKey, "api_key") || rawKey
+            const user = root.extractQueryParam(rawKey, "user_id")
+                || root.extractQueryParam(rawUser, "user_id")
+                || rawUser
+            if (user && key) {
+                out.push("api_key=" + encodeURIComponent(key))
+                out.push("user_id=" + encodeURIComponent(user))
+            }
+        }
+        return out
+    }
+
+    function makeRequest(tags, nsfw=false, limit=20, page=1, provider) {
+        if (provider === undefined) provider = currentProvider;
+        var url = constructRequestUrl(tags, nsfw, limit, page, provider)
         console.log("[Booru] Making request to " + url)
 
         const newResponse = root.booruResponseDataComponent.createObject(null, {
-            "provider": currentProvider,
+            "provider": provider,
             "tags": tags,
             "page": page,
             "images": [],
@@ -375,15 +491,23 @@ Singleton {
             if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
                 try {
                     // console.log("[Booru] Raw response: " + xhr.responseText)
-                    const provider = providers[currentProvider]
+                    const p = provider
                     let response;
-                    if (provider.manualParseFunc) {
-                        response = provider.manualParseFunc(xhr.responseText)
+                    if (providers[p].manualParseFunc) {
+                        response = providers[p].manualParseFunc(xhr.responseText)
                     } else {
                         response = JSON.parse(xhr.responseText)
-                        response = provider.mapFunc(response)
+                        response = providers[p].mapFunc(response)
                     }
                     // console.log("[Booru] Mapped response: " + JSON.stringify(response))
+                    // Some hosts (Gelbooru) hotlink-protect their image CDN and
+                    // only serve a file when the request carries a matching
+                    // Referer. Keep it on each image so bookmarks stay valid
+                    // across provider switches.
+                    const referer = providers[p].imageReferer ?? ""
+                    if (referer)
+                        for (const img of response) img.imageReferer = referer
+
                     newResponse.images = response
                     newResponse.message = response.length > 0 ? "" : root.failMessage
                     
@@ -406,10 +530,10 @@ Singleton {
 
         try {
             // Required for danbooru and konachan
-            if (["danbooru", "konachan"].includes(currentProvider)) {
+            if (["danbooru", "safebooru", "konachan"].includes(provider)) {
                 xhr.setRequestHeader("User-Agent", defaultUserAgent)
             }
-            else if (currentProvider == "zerochan") {
+            else if (provider == "zerochan") {
                 const userAgent = Config.options?.sidebar?.booru?.zerochan?.username ? `Desktop sidebar booru viewer - username: ${Config.options.sidebar.booru.zerochan.username}` : defaultUserAgent
                 xhr.setRequestHeader("User-Agent", userAgent)
             }
@@ -458,7 +582,7 @@ Singleton {
 
         try {
             // Required for danbooru and konachan
-            if (["danbooru", "konachan"].includes(currentProvider)) {
+            if (["danbooru", "safebooru", "konachan"].includes(currentProvider)) {
                 xhr.setRequestHeader("User-Agent", defaultUserAgent)
             }
             xhr.send()
