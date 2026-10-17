@@ -45,6 +45,14 @@ ListView {
             const base = scrollAnim.running ? root.scrollTargetY : root.contentY;
             var targetY = Math.max(0, Math.min(base - delta * scrollFactor, maxY));
 
+            // Nothing to scroll here (content fits, or we're already at the bound
+            // in this direction): don't consume the wheel, so an enclosing
+            // flickable (e.g. the right sidebar) can scroll instead.
+            if (maxY <= 0 || targetY === base) {
+                wheelEvent.accepted = false;
+                return;
+            }
+
             root.scrollTargetY = targetY;
             root.contentY = targetY;
             wheelEvent.accepted = true;

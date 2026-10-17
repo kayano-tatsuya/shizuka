@@ -29,6 +29,14 @@ Flickable {
             const base = scrollAnim.running ? root.scrollTargetY : root.contentY;
             var targetY = Math.max(0, Math.min(base - delta * scrollFactor, maxY));
 
+            // Nothing to scroll here (content fits, or already at the bound in
+            // this direction): don't consume the wheel, so an enclosing
+            // flickable can scroll instead.
+            if (maxY <= 0 || targetY === base) {
+                wheelEvent.accepted = false;
+                return;
+            }
+
             root.scrollTargetY = targetY;
             root.contentY = targetY;
             wheelEvent.accepted = true;
