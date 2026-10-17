@@ -66,6 +66,7 @@ Item {
             { name: Translation.tr("Desktop"),    icon: "texture",        component: Qt.resolvedUrl("pages/BackgroundConfig.qml") },
             { name: Translation.tr("Interface"),  icon: "bottom_app_bar", component: Qt.resolvedUrl("pages/InterfaceConfig.qml") },
             { name: Translation.tr("Services"),   icon: "settings",       component: Qt.resolvedUrl("pages/ServicesConfig.qml") },
+            { name: Translation.tr("API keys"),   icon: "key",            component: Qt.resolvedUrl("pages/ApiKeysConfig.qml") },
         ]
         if (WM.compositor === "hyprland") {
                     list.push({ name: Translation.tr("Hyprland"), icon: "select_window_2", component: Qt.resolvedUrl("pages/HyprlandConfig.qml") })

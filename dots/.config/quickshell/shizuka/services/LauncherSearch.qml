@@ -90,6 +90,7 @@ Singleton {
         { page: "Desktop",   path: "BackgroundConfig.qml" },
         { page: "Interface", path: "InterfaceConfig.qml" },
         { page: "Services",  path: "ServicesConfig.qml" },
+        { page: "API keys",  path: "ApiKeysConfig.qml" },
         { page: "Hyprland",  path: "HyprlandConfig.qml" },
         { page: "About",     path: "About.qml" },
         { page: "Quick",     path: "QuickConfig.qml" },
