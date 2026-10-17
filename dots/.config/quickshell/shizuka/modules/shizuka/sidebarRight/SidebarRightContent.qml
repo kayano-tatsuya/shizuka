@@ -133,269 +133,304 @@ Item {
         border.color: ColorUtils.transparentize(Appearance.colors.colLayer0Border, 0.8) 
         radius: Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 5
 
-        ColumnLayout {
+        // Scrolling viewport: the sidebar can now exceed the screen (a tall
+        // waifu banner used to squash the widgets below it). The column fills
+        // the viewport when the content is short, so the notification list
+        // still stretches, and scrolls once it no longer fits.
+        StyledFlickable {
+            id: sidebarFlickable
             anchors.fill: parent
-            anchors.margins: sidebarPadding
-            spacing: sidebarPadding
+            clip: true
 
-            // Banner
-            Loader {
-                Layout.fillWidth: true
-                Layout.fillHeight: false
-                sourceComponent: Config.options.sidebar.banner ? bannerComponent : normalComponent
+            contentWidth: width
+            contentHeight: sidebarColumn.height + sidebarPadding * 2
 
-                Component {
-                    id: bannerComponent
-                    Item {
-                        id: bannerRoot
-                        implicitWidth: parent?.width ?? 0
-                        // When the waifu is on it takes over the preview slot;
-                        // the wallpaper banner (and its picker) stays available
-                        // for when it is turned off.
-                        readonly property bool waifuEnabled: Config.options?.sidebar?.waifu?.enable ?? true
-                        // Strip below the photo holding the profile row and the
-                        // system buttons (matches the old 180 - 120 banner).
-                        readonly property int bannerFooterHeight: 60
-                        // The photo sizes itself from the image aspect ratio, so
-                        // the banner grows/shrinks with it.
-                        implicitHeight: wallpaperRect.height + bannerRoot.bannerFooterHeight
+            // Reopening the sidebar always lands on the banner, not wherever
+            // the scroll happened to be left.
+            Connections {
+                target: GlobalStates
+                function onSidebarRightOpenChanged() {
+                    if (!GlobalStates.sidebarRightOpen)
+                        sidebarFlickable.contentY = 0;
+                }
+            }
 
-                        Rectangle {
-                            id: sysRect
-                            anchors.fill: parent
-                            radius: Config.options.hyprland.decoration.rounding - 2
-                            color: Appearance.colors.colLayer1
+            ColumnLayout {
+                id: sidebarColumn
+                // Padding lives on the column (not the viewport) so the media
+                // player's negative margins can still bleed to the edges.
+                x: sidebarPadding
+                y: sidebarPadding
+                width: sidebarFlickable.width - sidebarPadding * 2
+                spacing: sidebarPadding
+                // max(viewport, content): short content fills, tall content scrolls.
+                height: Math.max(sidebarFlickable.height - sidebarPadding * 2, implicitHeight)
+
+                // Banner
+                Loader {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: false
+                    sourceComponent: Config.options.sidebar.banner ? bannerComponent : normalComponent
+
+                    Component {
+                        id: bannerComponent
+                        Item {
+                            id: bannerRoot
+                            implicitWidth: parent?.width ?? 0
+                            // When the waifu is on it takes over the preview slot;
+                            // the wallpaper banner (and its picker) stays available
+                            // for when it is turned off.
+                            readonly property bool waifuEnabled: Config.options?.sidebar?.waifu?.enable ?? true
+                            // Strip below the photo holding the profile row and the
+                            // system buttons (matches the old 180 - 120 banner).
+                            readonly property int bannerFooterHeight: 60
+                            // The photo sizes itself from the image aspect ratio, so
+                            // the banner grows/shrinks with it.
+                            implicitHeight: wallpaperRect.height + bannerRoot.bannerFooterHeight
 
                             Rectangle {
-                                id: wallpaperRect
-                                anchors {
-                                    top: parent.top
-                                    left: parent.left
-                                    right: parent.right
-                                    topMargin: 2
-                                    leftMargin: 2
-                                    rightMargin: 2
-                                }
-                                height: bannerRoot.waifuEnabled ? waifuBanner.implicitHeight : 120
-                                radius: sysRect.radius
-                                color: "transparent"
-
-                                StyledImage {
-                                    anchors.fill: parent
-                                    visible: !bannerRoot.waifuEnabled
-                                    fillMode: Image.PreserveAspectCrop
-                                    source: bannerRoot.waifuEnabled ? "" 
-                                        : (Config.options.sidebar.bannerImage !== "" 
-                                            ? Config.options.sidebar.bannerImage 
-                                            : Config.options.background.wallpaperPath)
-                                    cache: false
-                                    antialiasing: true
-                                    sourceSize.width: wallpaperRect.width * 2
-                                    sourceSize.height: wallpaperRect.height * 2
-                                    layer.enabled: true
-                                    layer.effect: OpacityMask {
-                                        maskSource: Rectangle {
-                                            width: wallpaperRect.width
-                                            height: wallpaperRect.height
-                                            radius: wallpaperRect.radius
-                                        }
-                                    }
-                                }
-                                MouseArea {
-                                    anchors.fill: parent
-                                    visible: !bannerRoot.waifuEnabled
-                                    cursorShape: Qt.PointingHandCursor
-                                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                    onClicked: (event) => {
-                                        if (event.button === Qt.LeftButton) {
-                                            fileChooser.running = true
-                                            GlobalStates.sidebarRightOpen = false
-                                        } else if (event.button === Qt.RightButton) {
-                                            Config.options.sidebar.bannerImage = ""
-                                        }
-                                    }
-                                }
-
-                                WaifuWidget {
-                                    id: waifuBanner
-                                    anchors.fill: parent
-                                    visible: bannerRoot.waifuEnabled
-                                    radius: Config.options.hyprland.decoration.rounding - 2
-                                }
-                            }
-
-                            Column {
-                                anchors {
-                                    left: parent.left
-                                    bottom: parent.bottom
-                                    leftMargin: 13
-                                    bottomMargin: 8
-                                }
-                                spacing: 1
+                                id: sysRect
+                                anchors.fill: parent
+                                radius: Config.options.hyprland.decoration.rounding - 2
+                                color: Appearance.colors.colLayer1
 
                                 Rectangle {
-                                    id: avatarRect
-                                    width: 48; height: 48; radius: width / 2
-                                    color: Appearance.colors.colPrimaryContainer
+                                    id: wallpaperRect
+                                    anchors {
+                                        top: parent.top
+                                        left: parent.left
+                                        right: parent.right
+                                        topMargin: 2
+                                        leftMargin: 2
+                                        rightMargin: 2
+                                    }
+                                    height: bannerRoot.waifuEnabled ? waifuBanner.implicitHeight : 120
+                                    radius: sysRect.radius
+                                    color: "transparent"
 
-                                    Image {
-                                        id: avatarImage
+                                    StyledImage {
                                         anchors.fill: parent
-                                        source: Config.options.profile.avatarPath !== "" 
-                                            ? "file://" + Config.options.profile.avatarPicture 
-                                            : "file:///home/" + (Quickshell.env("USER") ?? "user") + "/.face"
-                                        sourceSize.width: avatarImage.width * 2
-                                        sourceSize.height: avatarImage.height * 2
+                                        visible: !bannerRoot.waifuEnabled
                                         fillMode: Image.PreserveAspectCrop
+                                        source: bannerRoot.waifuEnabled ? "" 
+                                            : (Config.options.sidebar.bannerImage !== "" 
+                                                ? Config.options.sidebar.bannerImage 
+                                                : Config.options.background.wallpaperPath)
+                                        cache: false
+                                        antialiasing: true
+                                        sourceSize.width: wallpaperRect.width * 2
+                                        sourceSize.height: wallpaperRect.height * 2
                                         layer.enabled: true
                                         layer.effect: OpacityMask {
                                             maskSource: Rectangle {
-                                                width: avatarRect.width
-                                                height: avatarRect.height
-                                                radius: avatarRect.radius
+                                                width: wallpaperRect.width
+                                                height: wallpaperRect.height
+                                                radius: wallpaperRect.radius
                                             }
                                         }
-                                        onStatusChanged: {
-                                            if (status === Image.Error) visible = false
+                                    }
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        visible: !bannerRoot.waifuEnabled
+                                        cursorShape: Qt.PointingHandCursor
+                                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                        onClicked: (event) => {
+                                            if (event.button === Qt.LeftButton) {
+                                                fileChooser.running = true
+                                                GlobalStates.sidebarRightOpen = false
+                                            } else if (event.button === Qt.RightButton) {
+                                                Config.options.sidebar.bannerImage = ""
+                                            }
                                         }
                                     }
 
-                                    MaterialSymbol {
-                                        anchors.centerIn: parent
-                                        text: "account_circle"
-                                        iconSize: 32
-                                        color: Appearance.colors.colOnPrimaryContainer
-                                        visible: avatarImage.status === Image.Error
+                                    WaifuWidget {
+                                        id: waifuBanner
+                                        anchors.fill: parent
+                                        visible: bannerRoot.waifuEnabled
+                                        radius: Config.options.hyprland.decoration.rounding - 2
                                     }
                                 }
 
-                                StyledText {
-                                    text: (Config.options.profile.displayName === "" ? SystemInfo.username : Config.options.profile.displayName) + "@" + SystemInfo.hostname
-                                    font.pixelSize: Appearance.font.pixelSize.small
-                                    font.weight: Font.DemiBold
-                                    color: Appearance.colors.colOnLayer1
+                                Column {
+                                    anchors {
+                                        left: parent.left
+                                        bottom: parent.bottom
+                                        leftMargin: 13
+                                        bottomMargin: 8
+                                    }
+                                    spacing: 1
+
+                                    Rectangle {
+                                        id: avatarRect
+                                        width: 48; height: 48; radius: width / 2
+                                        color: Appearance.colors.colPrimaryContainer
+
+                                        Image {
+                                            id: avatarImage
+                                            anchors.fill: parent
+                                            source: Config.options.profile.avatarPath !== "" 
+                                                ? "file://" + Config.options.profile.avatarPicture 
+                                                : "file:///home/" + (Quickshell.env("USER") ?? "user") + "/.face"
+                                            sourceSize.width: avatarImage.width * 2
+                                            sourceSize.height: avatarImage.height * 2
+                                            fillMode: Image.PreserveAspectCrop
+                                            layer.enabled: true
+                                            layer.effect: OpacityMask {
+                                                maskSource: Rectangle {
+                                                    width: avatarRect.width
+                                                    height: avatarRect.height
+                                                    radius: avatarRect.radius
+                                                }
+                                            }
+                                            onStatusChanged: {
+                                                if (status === Image.Error) visible = false
+                                            }
+                                        }
+
+                                        MaterialSymbol {
+                                            anchors.centerIn: parent
+                                            text: "account_circle"
+                                            iconSize: 32
+                                            color: Appearance.colors.colOnPrimaryContainer
+                                            visible: avatarImage.status === Image.Error
+                                        }
+                                    }
+
+                                    StyledText {
+                                        text: (Config.options.profile.displayName === "" ? SystemInfo.username : Config.options.profile.displayName) + "@" + SystemInfo.hostname
+                                        font.pixelSize: Appearance.font.pixelSize.small
+                                        font.weight: Font.DemiBold
+                                        color: Appearance.colors.colOnLayer1
+                                    }
+
+                                    StyledText {
+                                        text: Translation.tr("Up • %1").arg(DateTime.uptime)
+                                        font.pixelSize: Appearance.font.pixelSize.smaller
+                                        color: Appearance.colors.colOnLayer1
+                                        opacity: 0.6
+                                    }
                                 }
 
-                                StyledText {
-                                    text: Translation.tr("Up • %1").arg(DateTime.uptime)
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                    color: Appearance.colors.colOnLayer1
-                                    opacity: 0.6
-                                }
-                            }
+                                ButtonGroup {
+                                    anchors {
+                                        right: parent.right
+                                        bottom: parent.bottom
+                                        margins: 4
+                                    }
+                                    color: "transparent"
+                                    padding: 4
 
-                            ButtonGroup {
-                                anchors {
-                                    right: parent.right
-                                    bottom: parent.bottom
-                                    margins: 4
-                                }
-                                color: "transparent"
-                                padding: 4
-
-                                QuickToggleButton {
-                                    toggled: root.editMode
-                                    visible: Config.options.sidebar.quickToggles.style === "android"
-                                    buttonIcon: "edit"
-                                    onClicked: root.editMode = !root.editMode
-                                    StyledToolTip {
-                                        text: Translation.tr("Edit quick toggles") + (root.editMode ? Translation.tr("\nClick a toggle below the line to add it\n× badge removes · drag the corner handle to resize\nDrag onto another toggle to reorder") : "")
+                                    QuickToggleButton {
+                                        toggled: root.editMode
+                                        visible: Config.options.sidebar.quickToggles.style === "android"
+                                        buttonIcon: "edit"
+                                        onClicked: root.editMode = !root.editMode
+                                        StyledToolTip {
+                                            text: Translation.tr("Edit quick toggles") + (root.editMode ? Translation.tr("\nClick a toggle below the line to add it\n× badge removes · drag the corner handle to resize\nDrag onto another toggle to reorder") : "")
+                                        }
                                     }
-                                }
-                                QuickToggleButton {
-                                    toggled: false
-                                    buttonIcon: "restart_alt"
-                                    onClicked: {
-                                        Quickshell.execDetached(["hyprctl", "reload"])
-                                        Quickshell.reload(true);
+                                    QuickToggleButton {
+                                        toggled: false
+                                        buttonIcon: "restart_alt"
+                                        onClicked: {
+                                            Quickshell.execDetached(["hyprctl", "reload"])
+                                            Quickshell.reload(true);
+                                        }
+                                        StyledToolTip {
+                                            text: Translation.tr("Reload Hyprland & Quickshell")
+                                        }
                                     }
-                                    StyledToolTip {
-                                        text: Translation.tr("Reload Hyprland & Quickshell")
+                                    QuickToggleButton {
+                                        toggled: GlobalStates.settingsOpen
+                                        buttonIcon: "settings"
+                                        onClicked: {
+                                            GlobalStates.sidebarRightOpen = false;
+                                            GlobalStates.settingsOpen = !GlobalStates.settingsOpen
+                                        }
+                                        StyledToolTip {
+                                            text: Translation.tr("Settings")
+                                        }
                                     }
-                                }
-                                QuickToggleButton {
-                                    toggled: GlobalStates.settingsOpen
-                                    buttonIcon: "settings"
-                                    onClicked: {
-                                        GlobalStates.sidebarRightOpen = false;
-                                        GlobalStates.settingsOpen = !GlobalStates.settingsOpen
-                                    }
-                                    StyledToolTip {
-                                        text: Translation.tr("Settings")
-                                    }
-                                }
-                                QuickToggleButton {
-                                    toggled: false
-                                    buttonIcon: "mode_off_on"
-                                    onClicked: GlobalStates.sessionOpen = true
-                                    StyledToolTip {
-                                        text: Translation.tr("Session")
+                                    QuickToggleButton {
+                                        toggled: false
+                                        buttonIcon: "mode_off_on"
+                                        onClicked: GlobalStates.sessionOpen = true
+                                        StyledToolTip {
+                                            text: Translation.tr("Session")
+                                        }
                                     }
                                 }
                             }
                         }
                     }
+
+                    Component {
+                        id: normalComponent
+                        SystemButtonRow {}
+                    }
                 }
 
-                Component {
-                    id: normalComponent
-                    SystemButtonRow {}
+                LoaderedQuickPanelImplementation {
+                    styleName: "classic"
+                    sourceComponent: ClassicQuickPanel {}
                 }
-            }
 
-            LoaderedQuickPanelImplementation {
-                styleName: "classic"
-                sourceComponent: ClassicQuickPanel {}
-            }
-
-            LoaderedQuickPanelImplementation {
-                styleName: "android"
-                sourceComponent: AndroidQuickPanel {
-                    editMode: root.editMode
+                LoaderedQuickPanelImplementation {
+                    styleName: "android"
+                    sourceComponent: AndroidQuickPanel {
+                        editMode: root.editMode
+                    }
                 }
-            }
 
-            Loader {
-                id: slidersLoader
-                Layout.fillWidth: true
-                visible: active
-                active: {
-                    const configQuickSliders = Config.options.sidebar.quickSliders
-                    if (!configQuickSliders.enable) return false
-                    if (!configQuickSliders.showMic && !configQuickSliders.showVolume && !configQuickSliders.showBrightness) return false;
-                    return true;
+                Loader {
+                    id: slidersLoader
+                    Layout.fillWidth: true
+                    visible: active
+                    active: {
+                        const configQuickSliders = Config.options.sidebar.quickSliders
+                        if (!configQuickSliders.enable) return false
+                        if (!configQuickSliders.showMic && !configQuickSliders.showVolume && !configQuickSliders.showBrightness) return false;
+                        return true;
+                    }
+                    sourceComponent: QuickSliders {}
                 }
-                sourceComponent: QuickSliders {}
-            }
 
-            Loader {
-                active: root.activePlayer !== null && GlobalStates.sidebarRightOpen && Config.options.sidebar.mediaPlayer
-                visible: active
-                Layout.fillWidth: true
-                Layout.topMargin: -10
-                Layout.bottomMargin: -10
-                Layout.leftMargin: -10
-                Layout.rightMargin: -10
-                sourceComponent: Player {
-                    player: root.activePlayer
-                    visualizerPoints: GlobalStates.visualizerPoints
-                    implicitHeight: 160
-                    radius: Appearance.rounding.normal
+                Loader {
+                    active: root.activePlayer !== null && GlobalStates.sidebarRightOpen && Config.options.sidebar.mediaPlayer
+                    visible: active
+                    Layout.fillWidth: true
+                    Layout.topMargin: -10
+                    Layout.bottomMargin: -10
+                    Layout.leftMargin: -10
+                    Layout.rightMargin: -10
+                    sourceComponent: Player {
+                        player: root.activePlayer
+                        visualizerPoints: GlobalStates.visualizerPoints
+                        implicitHeight: 160
+                        radius: Appearance.rounding.normal
+                    }
                 }
-            }
 
-            CenterWidgetGroup {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.fillHeight: true
-                Layout.fillWidth: true
-            }
+                CenterWidgetGroup {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+                    // No intrinsic height (its list is anchored to fill), so it
+                    // needs a base size. Capped at 450 so the notification list
+                    // can't dominate the sidebar: it fills while there is slack,
+                    // stays at 450, and scrolls internally beyond that.
+                    Layout.preferredHeight: 450
+                    Layout.maximumHeight: 450
+                }
 
-            BottomWidgetGroup {
-                visible: Config.options.sidebar.bottomGroup
-                id: bottomWidgetGroup
-                Layout.alignment: Qt.AlignHCenter
-                Layout.fillHeight: false
-                Layout.fillWidth: true
+                BottomWidgetGroup {
+                    visible: Config.options.sidebar.bottomGroup
+                    id: bottomWidgetGroup
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.fillHeight: false
+                    Layout.fillWidth: true
+                }
             }
         }
     }
