@@ -20,6 +20,7 @@ import qs.modules.shizuka.sidebarRight.nightLight
 import qs.modules.shizuka.sidebarRight.volumeMixer
 import qs.modules.shizuka.sidebarRight.wifiNetworks
 import qs.modules.shizuka.sidebarRight.iconPicker
+import qs.modules.shizuka.sidebarRight.waifu
 
 Item {
     id: root
@@ -32,7 +33,6 @@ Item {
     property bool showWifiDialog: false
     property bool editMode: false
     property bool showIconPickerDialog: false
-    property bool showSaveWallpaperDialog: false
 
     readonly property bool animatedEntrance: WM.compositor !== "hyprland"
     readonly property bool sidebarOpen: GlobalStates.sidebarRightOpen
@@ -94,7 +94,6 @@ Item {
                 root.showBluetoothDialog = false;
                 root.showAudioOutputDialog = false;
                 root.showAudioInputDialog = false;
-                root.showSaveWallpaperDialog = false;
             }
         }
     }
@@ -148,8 +147,18 @@ Item {
                 Component {
                     id: bannerComponent
                     Item {
-                        implicitHeight: 180
+                        id: bannerRoot
                         implicitWidth: parent?.width ?? 0
+                        // When the waifu is on it takes over the preview slot;
+                        // the wallpaper banner (and its picker) stays available
+                        // for when it is turned off.
+                        readonly property bool waifuEnabled: Config.options?.sidebar?.waifu?.enable ?? true
+                        // Strip below the photo holding the profile row and the
+                        // system buttons (matches the old 180 - 120 banner).
+                        readonly property int bannerFooterHeight: 60
+                        // The photo sizes itself from the image aspect ratio, so
+                        // the banner grows/shrinks with it.
+                        implicitHeight: wallpaperRect.height + bannerRoot.bannerFooterHeight
 
                         Rectangle {
                             id: sysRect
@@ -167,16 +176,18 @@ Item {
                                     leftMargin: 2
                                     rightMargin: 2
                                 }
-                                height: 120
+                                height: bannerRoot.waifuEnabled ? waifuBanner.implicitHeight : 120
                                 radius: sysRect.radius
                                 color: "transparent"
 
                                 StyledImage {
                                     anchors.fill: parent
+                                    visible: !bannerRoot.waifuEnabled
                                     fillMode: Image.PreserveAspectCrop
-                                    source: Config.options.sidebar.bannerImage !== "" 
-                                        ? Config.options.sidebar.bannerImage 
-                                        : Config.options.background.wallpaperPath
+                                    source: bannerRoot.waifuEnabled ? "" 
+                                        : (Config.options.sidebar.bannerImage !== "" 
+                                            ? Config.options.sidebar.bannerImage 
+                                            : Config.options.background.wallpaperPath)
                                     cache: false
                                     antialiasing: true
                                     sourceSize.width: wallpaperRect.width * 2
@@ -192,6 +203,7 @@ Item {
                                 }
                                 MouseArea {
                                     anchors.fill: parent
+                                    visible: !bannerRoot.waifuEnabled
                                     cursorShape: Qt.PointingHandCursor
                                     acceptedButtons: Qt.LeftButton | Qt.RightButton
                                     onClicked: (event) => {
@@ -202,6 +214,13 @@ Item {
                                             Config.options.sidebar.bannerImage = ""
                                         }
                                     }
+                                }
+
+                                WaifuWidget {
+                                    id: waifuBanner
+                                    anchors.fill: parent
+                                    visible: bannerRoot.waifuEnabled
+                                    radius: Config.options.hyprland.decoration.rounding - 2
                                 }
                             }
 
@@ -324,19 +343,6 @@ Item {
                 }
             }
 
-            RippleButtonWithIcon {
-                Layout.fillWidth: true
-                Layout.topMargin: -6
-                materialIcon: "save"
-                mainText: Translation.tr("Save wallpaper")
-                onClicked: {
-                    root.showSaveWallpaperDialog = true;
-                }
-                StyledToolTip {
-                    text: Translation.tr("Saves the current wallpaper to ~/Pictures/Wallpapers/SAVED (NO OVERRIDES)\nNever overwrites - safe from the Random buttons")
-                }
-            }
-
             LoaderedQuickPanelImplementation {
                 styleName: "classic"
                 sourceComponent: ClassicQuickPanel {}
@@ -441,11 +447,6 @@ Item {
     ToggleDialog {
         shownPropertyString: "showIconPickerDialog"
         dialog: IconPickerDialog {}
-    }
-
-    ToggleDialog {
-        shownPropertyString: "showSaveWallpaperDialog"
-        dialog: SaveWallpaperDialog {}
     }
 
     component ToggleDialog: Loader {

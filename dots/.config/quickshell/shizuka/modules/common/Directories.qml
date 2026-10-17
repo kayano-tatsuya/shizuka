@@ -32,6 +32,7 @@ Singleton {
     property string pixivPreviews: FileUtils.trimFileProtocol(`${Directories.cache}/media/pixiv`)
     property string booruDownloads: FileUtils.trimFileProtocol(Directories.pictures  + "/homework")
     property string booruDownloadsNsfw: FileUtils.trimFileProtocol(Directories.pictures + "/homework/🌶️")
+    property string waifuDownloads: FileUtils.trimFileProtocol(Directories.pictures + "/waifu")
     property string latexOutput: FileUtils.trimFileProtocol(`${Directories.cache}/media/latex`)
     property string shellConfig: FileUtils.trimFileProtocol(`${Directories.config}/shizuka`)
     property string shellConfigName: "config.json"
@@ -72,6 +73,7 @@ Singleton {
         Quickshell.execDetached(["mkdir", "-p", `${aiChats}`])
         Quickshell.execDetached(["mkdir", "-p", `${userActions}`])
         Quickshell.execDetached(["mkdir", "-p", `${eqStateDir}`])
+        Quickshell.execDetached(["mkdir", "-p", `${waifuDownloads}`])
         Quickshell.execDetached(["rm", "-rf", `${tempImages}`])
     }
 }
