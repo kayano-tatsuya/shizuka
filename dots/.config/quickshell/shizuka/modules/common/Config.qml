@@ -811,9 +811,31 @@ Singleton {
                     property bool allowNsfw: false
                     property string defaultProvider: "yandere"
                     property int limit: 20
+                    // Sidebar viewer (AE-style masonry): number of columns and the
+                    // minimum tile height. Column count is clamped at runtime.
+                    property int columns: 2
+                    property int tileSize: 150
+                    // Show the tag autocomplete list under the search field.
+                    property bool showTagSuggestions: true
                     property JsonObject zerochan: JsonObject {
                         property string username: "[unset]"
                     }
+                }
+                property JsonObject manga: JsonObject {
+                    property bool enable: true
+                    property string defaultProvider: "mangadex" // mangadex | mangalib
+                    property bool readingDirectionRtl: false
+                    // How many reader pages to preload ahead of the current one.
+                    property int prefetchPages: 2
+                }
+                property JsonObject waifu: JsonObject {
+                    property bool enable: true
+                    property string provider: "waifu.im" // waifu.im | t.alcy.cc
+                    // Reveal the action overlay (refresh/download/set wallpaper/
+                    // open source/bookmark) while the cursor is over the image.
+                    property bool hoverActions: true
+                    // Auto-refresh interval in seconds; 0 means manual only.
+                    property int refreshInterval: 0
                 }
                 property JsonObject cornerOpen: JsonObject {
                     property bool enable: true

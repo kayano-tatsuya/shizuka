@@ -77,6 +77,8 @@ Singleton {
             property JsonObject booru: JsonObject {
                 property bool allowNsfw: false
                 property string provider: "yandere"
+                // Bookmarked images (full mapped image objects), newest first.
+                property list<var> bookmarks: []
             }
 
             property JsonObject idle: JsonObject {
