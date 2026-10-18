@@ -25,7 +25,10 @@ Item {
     readonly property bool hoverActions: Config.options?.sidebar?.waifu?.hoverActions ?? true
 
     readonly property var image: Waifu.current
-    readonly property string imageUrl: root.image?.file_url ?? root.image?.sample_url ?? ""
+    // Prefer the (smaller, faster) sample/preview URLs: the full-res file_url
+    // (especially yande.re's) is multi-MB and QML's async Image loader can
+    // stall/fail on it, leaving the banner blank ("infinitely loading").
+    readonly property string imageUrl: root.image?.sample_url ?? root.image?.preview_url ?? root.image?.file_url ?? ""
     readonly property string sourceUrl: root.image?.source ?? ""
 
     // ---- Sizing ----
@@ -82,6 +85,7 @@ Item {
         id: preview
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
+        onStatusChanged: console.log("[WaifuWidget] preview status:", status, "source:", source, "implicit:", implicitWidth, implicitHeight)
         // Only the width is pinned; Qt derives the height from the aspect ratio
         // (pinning both would make `imageAspect` depend on itself). Alignment
         // only matters when an extreme ratio is clamped above/below.

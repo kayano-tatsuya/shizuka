@@ -38,6 +38,12 @@ Rectangle {
     border.color: ColorUtils.transparentize(Appearance.colors.colLayer0Border, 0.8)
 
     readonly property bool gated: (image?.is_nsfw ?? false) && !root.allowNsfw
+    readonly property real imageAspect: {
+        const w = root.image?.width ?? 0;
+        const h = root.image?.height ?? 0;
+        if (w > 0 && h > 0) return h / w;
+        return 0.62;
+    }
     readonly property string fullUrl: image?.file_url ?? image?.sample_url ?? ""
     readonly property string displayUrl: image?.sample_url ?? image?.file_url ?? image?.preview_url ?? ""
     readonly property string sourceUrl: image?.source ?? ""
@@ -229,7 +235,10 @@ Rectangle {
         // ---- image -------------------------------------------------------
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 240
+            // Scale the preview to the image's aspect ratio (like the right
+            // sidebar's waifu banner) instead of a fixed 240 px strip, so
+            // portrait/landscape art is not squashed or letterboxed.
+            Layout.preferredHeight: Math.max(160, Math.min(460, (root.width - 24) * root.imageAspect))
             radius: Appearance.rounding.small
             color: Appearance.colors.colLayer2
             clip: true

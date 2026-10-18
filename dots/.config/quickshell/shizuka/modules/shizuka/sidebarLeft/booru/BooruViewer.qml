@@ -587,6 +587,19 @@ Item {
         }
     }
 
+    // Register the detail popup as part of the focus grab so clicks on its
+    // buttons do not dismiss the sidebar (which would swallow the click).
+    Connections {
+        target: root
+        function onDetailImageChanged() {
+            if (root.detailImage !== null) {
+                GlobalFocusGrab.addDismissable(detailPopup);
+            } else {
+                GlobalFocusGrab.removeDismissable(detailPopup);
+            }
+        }
+    }
+
     // A separate Wayland popup surface docked just past the sidebar's right
     // edge, so a clicked image opens beside the grid instead of launching an
     // external viewer. `PopupAdjustment.None` keeps it docked where we put it
@@ -594,6 +607,7 @@ Item {
     PopupWindow {
         id: detailPopup
         visible: root.detailImage !== null && GlobalStates.sidebarLeftOpen
+        grabFocus: true
         color: "transparent"
         implicitWidth: 300
         implicitHeight: Math.max(160, root.height)
@@ -622,4 +636,5 @@ Item {
             onTagActivated: (tag) => root.activateTag(tag)
         }
     }
+
 }
