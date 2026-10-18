@@ -86,6 +86,27 @@ Scope { // Scope
     }
 
     Loader {
+        id: booruClickCatcherLoader
+        active: true
+        sourceComponent: PanelWindow {
+            id: booruClickCatcher
+            visible: GlobalStates.sidebarLeftOpen
+            color: "transparent"
+            WlrLayershell.namespace: "quickshell:sidebarLeftCatcher"
+            WlrLayershell.layer: WlrLayer.Bottom
+            anchors { top: true; left: true; right: true; bottom: true }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: (mouse) => {
+                    console.log("[Catcher] clicked, closing sidebar");
+                    GlobalStates.sidebarLeftOpen = false;
+                }
+            }
+        }
+    }
+
+    Loader {
         id: sidebarLoader
         active: true
         
