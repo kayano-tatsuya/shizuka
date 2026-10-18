@@ -186,6 +186,9 @@ Rectangle {
         onClicked: (mouse) => {
             if (root.gated) return;
             if (mouse.button === Qt.RightButton) {
+                // Suspend the focus grab first so opening the detail panel (a
+                // new window) doesn't dismiss the sidebar. Re-enabled on close.
+                GlobalFocusGrab.suspended = true;
                 // Open the AE-style detail panel (all per-image actions live there).
                 root.activate();
             } else {

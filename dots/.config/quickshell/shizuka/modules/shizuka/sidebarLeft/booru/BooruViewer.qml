@@ -19,6 +19,7 @@ import Quickshell
  */
 Item {
     id: root
+
     property real padding: 4
 
     property string tagText: ""
@@ -95,6 +96,7 @@ Item {
         root.detailImage = image;
     }
     function closeDetail() {
+        GlobalFocusGrab.suspended = false;
         root.detailImage = null;
     }
     // Toggle the sidebar waifu from the grid/detail. `Waifu` owns the state.
@@ -587,38 +589,21 @@ Item {
         }
     }
 
-    // Register the detail popup as part of the focus grab so clicks on its
-    // buttons do not dismiss the sidebar (which would swallow the click).
-    Connections {
-        target: root
-        function onDetailImageChanged() {
-            if (root.detailImage !== null) {
-                GlobalFocusGrab.addDismissable(detailPopup);
-            } else {
-                GlobalFocusGrab.removeDismissable(detailPopup);
-            }
-        }
-    }
 
-    // A separate Wayland popup surface docked just past the sidebar's right
-    // edge, so a clicked image opens beside the grid instead of launching an
-    // external viewer. `PopupAdjustment.None` keeps it docked where we put it
-    // rather than letting the compositor slide it back over the sidebar.
-    PopupWindow {
-        id: detailPopup
-        visible: root.detailImage !== null && GlobalStates.sidebarLeftOpen
-        grabFocus: true
-        color: "transparent"
-        implicitWidth: 300
-        implicitHeight: Math.max(160, root.height)
-        anchor {
-            window: root.QsWindow.window
-            item: root
-            adjustment: PopupAdjustment.None
-            rect: Qt.rect(root.width - 4, 0, 1, root.height)
-            edges: Edges.Top | Edges.Left
-            gravity: Edges.Bottom | Edges.Right
-        }
+    // Detail panel. Rendered as an in-sidebar overlay (not a separate
+    // window) so it stays inside the sidebar surface: that keeps the focus
+    // grab from dismissing the sidebar when it opens, and lets its buttons
+    // receive clicks. It covers the viewer while open; closing returns to
+    // the grid.
+    Rectangle {
+        id: detailOverlay
+        anchors.fill: parent
+        visible: root.detailImage !== null
+        z: 10
+        color: Appearance.colors.colLayer0
+        radius: Appearance.rounding.small
+        clip: true
+
         StyledRectangularShadow {
             target: detailCard
         }
