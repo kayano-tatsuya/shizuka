@@ -104,6 +104,13 @@ Item {
             radius: Appearance.rounding.small
             clip: true
 
+            MouseArea {
+                anchors.fill: parent
+                z: 100
+                acceptedButtons: Qt.AllButtons
+                onClicked: (mouse) => console.log("[Overlay] clicked at", mouse.x, mouse.y)
+            }
+
 
             BooruDetail {
                 id: booruDetailCard
@@ -165,6 +172,8 @@ Item {
             }
         }
     }
+
+
 
 
 

@@ -594,4 +594,5 @@ Item {
             if (!GlobalStates.sidebarLeftOpen) root.closeDetail();
         }
     }
+
 }
