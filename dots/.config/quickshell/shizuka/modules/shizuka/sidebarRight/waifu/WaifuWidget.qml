@@ -85,7 +85,7 @@ Item {
         id: preview
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
-        onStatusChanged: console.log("[WaifuWidget] preview status:", status, "source:", source, "implicit:", implicitWidth, implicitHeight)
+
         // Only the width is pinned; Qt derives the height from the aspect ratio
         // (pinning both would make `imageAspect` depend on itself). Alignment
         // only matters when an extreme ratio is clamped above/below.

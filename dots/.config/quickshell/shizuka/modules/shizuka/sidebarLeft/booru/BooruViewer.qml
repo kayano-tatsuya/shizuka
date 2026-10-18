@@ -96,7 +96,7 @@ Item {
         root.detailImage = image;
     }
     function closeDetail() {
-        GlobalFocusGrab.suspended = root.booruActive;
+        GlobalFocusGrab.suspended = false;
         root.detailImage = null;
     }
     // Toggle the sidebar waifu from the grid/detail. `Waifu` owns the state.
@@ -594,6 +594,7 @@ Item {
             if (!GlobalStates.sidebarLeftOpen) root.closeDetail();
         }
     }
+
 
 
 }
