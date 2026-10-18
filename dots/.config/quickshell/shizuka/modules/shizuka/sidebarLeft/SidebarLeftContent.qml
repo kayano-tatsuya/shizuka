@@ -34,11 +34,11 @@ Item {
         if (event.modifiers === Qt.ControlModifier) {
             if (event.key === Qt.Key_PageDown) {
                 swipeView.incrementCurrentIndex()
-                event.accepted = true;
+                event.accepted = true
             }
             else if (event.key === Qt.Key_PageUp) {
                 swipeView.decrementCurrentIndex()
-                event.accepted = true;
+                event.accepted = true
             }
         }
     }
@@ -91,100 +91,76 @@ Item {
                 ]
             }
         }
+    }
 
-        // Detail panel overlay (booru). Rendered as a sibling of the
-        // SwipeView (not inside it) so it is not affected by the SwipeView's
-        // clip/layer and its buttons receive input reliably.
-        Rectangle {
-            id: booruDetailOverlay
+    // Detail panel overlay (booru). Sibling of the ColumnLayout so it is
+    // not managed by the layout and its buttons receive input reliably.
+    Rectangle {
+        id: booruDetailOverlay
+        anchors.fill: parent
+        visible: root.booruEnabled && (swipeView.currentItem?.detailImage ?? null) !== null
+        z: 10
+        color: Appearance.colors.colLayer0
+        radius: Appearance.rounding.small
+        clip: true
+
+        BooruDetail {
+            id: booruDetailCard
             anchors.fill: parent
-            visible: root.booruEnabled && (swipeView.currentItem?.detailImage ?? null) !== null
-            z: 10
-            color: Appearance.colors.colLayer0
-            radius: Appearance.rounding.small
-            clip: true
-
-
-
-            BooruDetail {
-                id: booruDetailCard
-                anchors.fill: parent
-                anchors.margins: Appearance.sizes.elevationMargin
-                image: swipeView.currentItem?.detailImage ?? null
-                allowNsfw: swipeView.currentItem?.allowNsfw ?? false
-                bookmarked: {
-                    const v = swipeView.currentItem;
-                    return (v && typeof v.isBookmarked === "function") ? v.isBookmarked(v.detailImage) : false;
-                }
-                isWaifu: {
-                    const v = swipeView.currentItem;
-                    return v ? Waifu.isCurrent(v.detailImage) : false;
-                }
-                onCloseRequested: {
-                    const v = swipeView.currentItem;
-                    if (v && typeof v.closeDetail === "function") v.closeDetail();
-                }
-                onToggleBookmarkRequested: {
-                    const v = swipeView.currentItem;
-                    if (v && typeof v.toggleBookmark === "function") v.toggleBookmark(v.detailImage);
-                }
-                onSetWaifuRequested: {
-                    const v = swipeView.currentItem;
-                    if (v && typeof v.toggleWaifu === "function") v.toggleWaifu(v.detailImage);
-                }
-                onTagActivated: (tag) => {
-                    const v = swipeView.currentItem;
-                    if (v && typeof v.activateTag === "function") v.activateTag(tag);
-                }
+            anchors.margins: Appearance.sizes.elevationMargin
+            image: swipeView.currentItem?.detailImage ?? null
+            allowNsfw: swipeView.currentItem?.allowNsfw ?? false
+            bookmarked: {
+                const v = swipeView.currentItem;
+                return (v && typeof v.isBookmarked === "function") ? v.isBookmarked(v.detailImage) : false;
             }
-        }
-
-        Component {
-            id: aiChat
-            AiChat {}
-        }
-        Component {
-            id: translator
-            Translator {}
-        }
-        Component {
-            id: media
-            SidebarPlayerControl {}
-        }
-        Component {
-            id: booru
-            BooruViewer {}
-        }
-        Component {
-            id: placeholder
-            Item {
-                StyledText {
-                    anchors.centerIn: parent
-                    text: root.weebCloset ? Translation.tr("Nothing") : Translation.tr("Enjoy your empty sidebar...")
-                    color: Appearance.colors.colSubtext
-                }
+            isWaifu: {
+                const v = swipeView.currentItem;
+                return v ? Waifu.isCurrent(v.detailImage) : false;
+            }
+            onCloseRequested: {
+                const v = swipeView.currentItem;
+                if (v && typeof v.closeDetail === "function") v.closeDetail();
+            }
+            onToggleBookmarkRequested: {
+                const v = swipeView.currentItem;
+                if (v && typeof v.toggleBookmark === "function") v.toggleBookmark(v.detailImage);
+            }
+            onSetWaifuRequested: {
+                const v = swipeView.currentItem;
+                if (v && typeof v.toggleWaifu === "function") v.toggleWaifu(v.detailImage);
+            }
+            onTagActivated: (tag) => {
+                const v = swipeView.currentItem;
+                if (v && typeof v.activateTag === "function") v.activateTag(tag);
             }
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    Component {
+        id: aiChat
+        AiChat {}
+    }
+    Component {
+        id: translator
+        Translator {}
+    }
+    Component {
+        id: media
+        SidebarPlayerControl {}
+    }
+    Component {
+        id: booru
+        BooruViewer {}
+    }
+    Component {
+        id: placeholder
+        Item {
+            StyledText {
+                anchors.centerIn: parent
+                text: root.weebCloset ? Translation.tr("Nothing") : Translation.tr("Enjoy your empty sidebar...")
+                color: Appearance.colors.colSubtext
+            }
+        }
+    }
 }
