@@ -594,36 +594,4 @@ Item {
             if (!GlobalStates.sidebarLeftOpen) root.closeDetail();
         }
     }
-
-
-
-
-    // Detail panel overlay (in-sidebar, covers the viewer while open).
-    Rectangle {
-        id: detailOverlay
-        anchors.fill: parent
-        visible: root.detailImage !== null
-        z: 10
-        color: Appearance.colors.colLayer0
-        radius: Appearance.rounding.small
-        clip: true
-
-        StyledRectangularShadow {
-            target: detailCard
-        }
-        BooruDetail {
-            id: detailCard
-            anchors.fill: parent
-            anchors.margins: Appearance.sizes.elevationMargin
-            image: root.detailImage
-            allowNsfw: root.allowNsfw
-            bookmarked: root.isBookmarked(root.detailImage)
-            isWaifu: Waifu.isCurrent(root.detailImage)
-            onCloseRequested: root.closeDetail()
-            onToggleBookmarkRequested: root.toggleBookmark(root.detailImage)
-            onSetWaifuRequested: root.toggleWaifu(root.detailImage)
-            onTagActivated: (tag) => root.activateTag(tag)
-        }
-    }
-
 }
