@@ -23,6 +23,7 @@ Singleton {
     property bool suspended: false
 
     function dismiss() {
+        console.log("[GFG] dismiss() called");
         root.dismissable = [];
         root.dismissed();
     }
@@ -70,6 +71,7 @@ Singleton {
         windows: root.dismissable.every(w => !w?.focusable) || root.dismissable.some(w => root.hasActive(w?.contentItem)) ? [...root.dismissable, ...root.persistent] : [...root.dismissable]
         active: WM.compositor === "hyprland" && root.dismissable.length > 0 && !root.suspended
         onCleared: () => {
+            console.log("[GFG] onCleared fired");
             root.dismiss();
         }
     }
