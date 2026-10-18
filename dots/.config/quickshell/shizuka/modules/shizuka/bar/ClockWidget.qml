@@ -12,6 +12,17 @@ BarWidgetSwitcher {
     readonly property string dateTimeString: DateTime.time
     readonly property bool hasAmPm: dateTimeString.toLowerCase().includes("am") || dateTimeString.toLowerCase().includes("pm")
 
+    // Detect whether the main font is monospace so the layout can adapt:
+    // proportional fonts need the negative letter-spacing / centering that
+    // was tuned for Google Sans Flex, while monospace fonts (JetBrains Mono,
+    // etc.) already have even metrics and look off with those tweaks.
+    FontMetrics {
+        id: mainFontMetrics
+        font.family: Appearance.font.family.main
+        font.pixelSize: Appearance.font.pixelSize.normal
+    }
+    readonly property bool mainFontIsMono: Math.abs(mainFontMetrics.advanceWidth("i") - mainFontMetrics.advanceWidth("W")) < 0.5
+
     Timer {
         interval: 60000
         running: true
@@ -35,7 +46,7 @@ BarWidgetSwitcher {
                         required property string modelData
                         width: implicitWidth
                         horizontalAlignment: Text.AlignHCenter
-                        font.letterSpacing: -0.2
+                        font.letterSpacing: root.mainFontIsMono ? 0 : -0.2
                         font.features: { "tnum": 1 }
                         font.pixelSize: {
                             if (modelData.match(/am|pm/i))
@@ -76,7 +87,7 @@ BarWidgetSwitcher {
                         required property string modelData
                         width: implicitWidth
                         horizontalAlignment: Text.AlignHCenter
-                        font.letterSpacing: -0.2
+                        font.letterSpacing: root.mainFontIsMono ? 0 : -0.2
                         font.features: { "tnum": 1 }
                         font.pixelSize: modelData.match(/am|pm/i)
                             ? Appearance.font.pixelSize.smallest - 2
@@ -113,19 +124,24 @@ BarWidgetSwitcher {
                 font.pixelSize: Appearance.font.pixelSize.small
                 color: Appearance.colors.colOnLayer1
                 text: DateTime.longDate
+                // Baseline-align text of different sizes so monospace and
+                // proportional fonts both sit on the same line.
+                Layout.alignment: root.mainFontIsMono ? Qt.AlignBaseline : Qt.AlignVCenter
             }
             StyledText {
                 visible: root.showDate
                 font.pixelSize: Appearance.font.pixelSize.small
                 color: Appearance.colors.colOnLayer1
                 text: "•"
+                Layout.alignment: root.mainFontIsMono ? Qt.AlignBaseline : Qt.AlignVCenter
             }
             StyledText {
                 font.pixelSize: Appearance.font.pixelSize.large
                 color: Appearance.colors.colOnLayer1
                 text: DateTime.time
-                font.letterSpacing: -0.4
+                font.letterSpacing: root.mainFontIsMono ? 0 : -0.4
                 font.features: { "tnum": 1 }
+                Layout.alignment: root.mainFontIsMono ? Qt.AlignBaseline : Qt.AlignVCenter
             }
         }
     }
@@ -162,7 +178,7 @@ BarWidgetSwitcher {
                     font.weight: Font.Bold
                     text: pill.time
                     font.features: { "tnum": 1 }
-                    font.letterSpacing: -0.4
+                    font.letterSpacing: root.mainFontIsMono ? 0 : -0.4
                 }
             }
 
