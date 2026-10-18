@@ -102,6 +102,12 @@ Scope { // Scope
             Connections {
                 target: GlobalStates
                 function onSidebarLeftOpenChanged() {
+                    if (!GlobalStates.sidebarLeftOpen) {
+                        // The booru tab may have suspended the focus grab while
+                        // it was open; make sure it is re-enabled when the sidebar
+                        // closes, otherwise no sidebar closes on outside click.
+                        GlobalFocusGrab.suspended = false;
+                    }
                     if (GlobalStates.sidebarLeftOpen) {
                         closeAnimTimer.stop();
                         panelWindow.reallyVisible = true;
