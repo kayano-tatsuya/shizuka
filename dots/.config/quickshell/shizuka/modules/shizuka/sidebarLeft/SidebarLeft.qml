@@ -102,7 +102,6 @@ Scope { // Scope
             Connections {
                 target: GlobalStates
                 function onSidebarLeftOpenChanged() {
-                    console.log("[SidebarLeft] sidebarLeftOpen changed to", GlobalStates.sidebarLeftOpen, "stack:", new Error().stack);
                     if (GlobalStates.sidebarLeftOpen) {
                         closeAnimTimer.stop();
                         panelWindow.reallyVisible = true;
@@ -125,7 +124,6 @@ Scope { // Scope
             property var contentParent: sidebarLeftBackground
 
             function hide() {
-                console.log("[SidebarLeft] hide() called");
                 GlobalStates.sidebarLeftOpen = false
             }
 
@@ -175,7 +173,6 @@ Scope { // Scope
             }
 
             onVisibleChanged: {
-                console.log("[SidebarLeft] visible changed:", visible);
                 if (visible) {
                     GlobalFocusGrab.addDismissable(panelWindow);
                 } else {

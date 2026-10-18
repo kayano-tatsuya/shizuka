@@ -96,7 +96,7 @@ Item {
         root.detailImage = image;
     }
     function closeDetail() {
-        GlobalFocusGrab.suspended = false;
+        GlobalFocusGrab.suspended = root.booruActive;
         root.detailImage = null;
     }
     // Toggle the sidebar waifu from the grid/detail. `Waifu` owns the state.
@@ -580,7 +580,13 @@ Item {
     // Closes itself when the sidebar hides or the booru tab is left, so an
     // orphan card can never outlive the surface it is docked to.
     readonly property bool booruActive: SwipeView.isCurrentItem
-    onBooruActiveChanged: if (!root.booruActive) root.closeDetail()
+    onBooruActiveChanged: {
+        // Suspend the focus grab while the booru tab is active so a right-click
+        // (or any click) on a tile can't dismiss the sidebar — the detail
+        // panel needs the sidebar to stay open. Re-enabled on other tabs.
+        GlobalFocusGrab.suspended = root.booruActive;
+        if (!root.booruActive) root.closeDetail();
+    }
 
     Connections {
         target: GlobalStates
@@ -590,11 +596,9 @@ Item {
     }
 
 
-    // Detail panel. Rendered as an in-sidebar overlay (not a separate
-    // window) so it stays inside the sidebar surface: that keeps the focus
-    // grab from dismissing the sidebar when it opens, and lets its buttons
-    // receive clicks. It covers the viewer while open; closing returns to
-    // the grid.
+
+
+    // Detail panel overlay (in-sidebar, covers the viewer while open).
     Rectangle {
         id: detailOverlay
         anchors.fill: parent

@@ -60,10 +60,12 @@ Item {
         }
 
         Rectangle {
+            id: contentRect
             Layout.fillWidth: true
             Layout.fillHeight: true
             implicitWidth: swipeView.implicitWidth
             implicitHeight: swipeView.implicitHeight
+
             topLeftRadius: 0
             bottomLeftRadius: Appearance.rounding.normal
             topRightRadius: 0
@@ -75,16 +77,10 @@ Item {
                 anchors.fill: parent
                 spacing: 10
                 currentIndex: tabBar.currentIndex
+                interactive: false
 
                 clip: true
-                layer.enabled: true
-                layer.effect: OpacityMask {
-                    maskSource: Rectangle {
-                        width: swipeView.width
-                        height: swipeView.height
-                        radius: Appearance.rounding.small
-                    }
-                }
+                layer.enabled: false
 
                 contentChildren: [
                     ...(root.aiChatEnabled ? [aiChat.createObject()] : []),
@@ -93,6 +89,52 @@ Item {
                     ...((root.tabButtonList.length === 0 || (!root.aiChatEnabled && !root.translatorEnabled && root.weebCloset)) ? [placeholder.createObject()] : []),
                     ...(root.booruEnabled ? [booru.createObject()] : []),
                 ]
+            }
+        }
+
+        // Detail panel overlay (booru). Rendered as a sibling of the
+        // SwipeView (not inside it) so it is not affected by the SwipeView's
+        // clip/layer and its buttons receive input reliably.
+        Rectangle {
+            id: booruDetailOverlay
+            anchors.fill: parent
+            visible: root.booruEnabled && (swipeView.currentItem?.detailImage ?? null) !== null
+            z: 10
+            color: Appearance.colors.colLayer0
+            radius: Appearance.rounding.small
+            clip: true
+
+
+            BooruDetail {
+                id: booruDetailCard
+                anchors.fill: parent
+                anchors.margins: Appearance.sizes.elevationMargin
+                image: swipeView.currentItem?.detailImage ?? null
+                allowNsfw: swipeView.currentItem?.allowNsfw ?? false
+                bookmarked: {
+                    const v = swipeView.currentItem;
+                    return (v && typeof v.isBookmarked === "function") ? v.isBookmarked(v.detailImage) : false;
+                }
+                isWaifu: {
+                    const v = swipeView.currentItem;
+                    return v ? Waifu.isCurrent(v.detailImage) : false;
+                }
+                onCloseRequested: {
+                    const v = swipeView.currentItem;
+                    if (v && typeof v.closeDetail === "function") v.closeDetail();
+                }
+                onToggleBookmarkRequested: {
+                    const v = swipeView.currentItem;
+                    if (v && typeof v.toggleBookmark === "function") v.toggleBookmark(v.detailImage);
+                }
+                onSetWaifuRequested: {
+                    const v = swipeView.currentItem;
+                    if (v && typeof v.toggleWaifu === "function") v.toggleWaifu(v.detailImage);
+                }
+                onTagActivated: (tag) => {
+                    const v = swipeView.currentItem;
+                    if (v && typeof v.activateTag === "function") v.activateTag(tag);
+                }
             }
         }
 
@@ -123,4 +165,17 @@ Item {
             }
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
