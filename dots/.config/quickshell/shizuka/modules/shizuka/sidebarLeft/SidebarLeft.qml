@@ -237,14 +237,14 @@ Scope { // Scope
                 anchors {
                     bottom: sidebarLeftBackground.bottom
                     right: sidebarLeftBackground.right
-                    bottomMargin: 8
-                    rightMargin: 8
+                    bottomMargin: 10
+                    rightMargin: 10
                 }
-                z: 100
-                implicitWidth: 28
-                implicitHeight: 28
+                z: 1000
+                implicitWidth: 34
+                implicitHeight: 34
                 buttonRadius: Appearance.rounding.full
-                colBackground: ColorUtils.transparentize(Appearance.colors.colLayer0, 0.3)
+                colBackground: Appearance.colors.colLayer2
                 colBackgroundHover: Appearance.colors.colLayer2Hover
                 toggled: root.pin
                 colBackgroundToggled: Appearance.colors.colPrimaryContainer
@@ -252,7 +252,7 @@ Scope { // Scope
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
                     text: root.pin ? "lock" : "lock_open"
-                    iconSize: Appearance.font.pixelSize.small
+                    iconSize: Appearance.font.pixelSize.normal
                     color: root.pin ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer1
                 }
                 StyledToolTip {
