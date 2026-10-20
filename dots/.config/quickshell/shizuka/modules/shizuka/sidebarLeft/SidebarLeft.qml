@@ -59,8 +59,13 @@ Scope { // Scope
     }
 
     function togglePin() {
-        if (!root.pin) pinWithFunnyHyprlandWorkaroundProc.doIt()
-        else root.pin = !root.pin;
+        if (!root.pin) {
+            GlobalFocusGrab.removeDismissable(panelWindow);
+            pinWithFunnyHyprlandWorkaroundProc.doIt()
+        } else {
+            root.pin = !root.pin;
+            GlobalFocusGrab.addDismissable(panelWindow);
+        }
     }
 
     Component.onCompleted: {
@@ -99,7 +104,7 @@ Scope { // Scope
             MouseArea {
                 anchors.fill: parent
                 onClicked: (mouse) => {
-                    console.log("[Catcher] clicked, closing sidebar");
+                    if (root.pin) return;
                     GlobalStates.sidebarLeftOpen = false;
                 }
             }
@@ -198,7 +203,7 @@ Scope { // Scope
 
             onVisibleChanged: {
                 if (visible) {
-                    GlobalFocusGrab.addDismissable(panelWindow);
+                    if (!root.pin) GlobalFocusGrab.addDismissable(panelWindow);
                 } else {
                     GlobalFocusGrab.removeDismissable(panelWindow);
                 }
@@ -224,6 +229,35 @@ Scope { // Scope
                 enabled: panelWindow.animatedEntrance
                 visible: panelWindow.animatedEntrance
                 onClicked: panelWindow.hide()
+            }
+
+            // Floating lock (pin) toggle.
+            RippleButton {
+                id: leftLockButton
+                anchors {
+                    top: parent.top
+                    right: parent.right
+                    topMargin: Appearance.sizes.hyprlandGapsOut + 8
+                    rightMargin: Appearance.sizes.hyprlandGapsOut + 8
+                }
+                z: 100
+                implicitWidth: 32
+                implicitHeight: 32
+                buttonRadius: Appearance.rounding.full
+                colBackground: ColorUtils.transparentize(Appearance.colors.colLayer0, 0.3)
+                colBackgroundHover: Appearance.colors.colLayer2Hover
+                toggled: root.pin
+                colBackgroundToggled: Appearance.colors.colPrimaryContainer
+                onClicked: root.togglePin()
+                contentItem: MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: root.pin ? "lock" : "lock_open"
+                    iconSize: Appearance.font.pixelSize.normal
+                    color: root.pin ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer1
+                }
+                StyledToolTip {
+                    text: root.pin ? Translation.tr("Unpin sidebar (allow close)") : Translation.tr("Pin sidebar (keep open)")
+                }
             }
 
             StyledRectangularShadow {

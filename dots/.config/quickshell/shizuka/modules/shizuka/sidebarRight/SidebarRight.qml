@@ -1,6 +1,8 @@
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.widgets
+import qs.modules.common.functions
 import QtQuick
 import Quickshell.Io
 import Quickshell
@@ -10,6 +12,16 @@ import Quickshell.Hyprland
 Scope {
     id: root
     property int sidebarWidth: Appearance.sizes.sidebarWidth
+    property bool pinned: false
+
+    function togglePinned() {
+        root.pinned = !root.pinned;
+        if (root.pinned) {
+            GlobalFocusGrab.removeDismissable(panelWindow);
+        } else {
+            GlobalFocusGrab.addDismissable(panelWindow);
+        }
+    }
     readonly property bool centerOnly: Config.options.bar.layouts.leftLayout.length === 0 && Config.options.bar.layouts.rightLayout.length === 0 && !Config.options.bar.vertical
     readonly property real barCenterOnlyOffset: (Config.options.bar.centerOnlyReserveFrame && root.centerOnly)
         ? Config.options.bar.frameThickness
@@ -50,7 +62,7 @@ Scope {
 
         onVisibleChanged: {
             if (visible) {
-                GlobalFocusGrab.addDismissable(panelWindow);
+                if (!root.pinned) GlobalFocusGrab.addDismissable(panelWindow);
             } else {
                 GlobalFocusGrab.removeDismissable(panelWindow);
             }
@@ -74,6 +86,35 @@ Scope {
             right: true
             bottom: true
             left: animatedEntrance
+        }
+
+        // Floating lock (pin) toggle.
+        RippleButton {
+            id: rightLockButton
+            anchors {
+                top: parent.top
+                right: parent.right
+                topMargin: 8
+                rightMargin: 8
+            }
+            z: 100
+            implicitWidth: 32
+            implicitHeight: 32
+            buttonRadius: Appearance.rounding.full
+            colBackground: ColorUtils.transparentize(Appearance.colors.colLayer0, 0.3)
+            colBackgroundHover: Appearance.colors.colLayer2Hover
+            toggled: root.pinned
+            colBackgroundToggled: Appearance.colors.colPrimaryContainer
+            onClicked: root.togglePinned()
+            contentItem: MaterialSymbol {
+                anchors.centerIn: parent
+                text: root.pinned ? "lock" : "lock_open"
+                iconSize: Appearance.font.pixelSize.normal
+                color: root.pinned ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer1
+            }
+            StyledToolTip {
+                text: root.pinned ? Translation.tr("Unpin sidebar (allow close)") : Translation.tr("Pin sidebar (keep open)")
+            }
         }
 
         margins {
