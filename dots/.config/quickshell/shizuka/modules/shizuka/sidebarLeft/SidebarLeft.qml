@@ -234,12 +234,8 @@ Scope { // Scope
             // Floating lock (pin) toggle, anchored to the sidebar background.
             RippleButton {
                 id: leftLockButton
-                anchors {
-                    bottom: sidebarLeftBackground.bottom
-                    right: sidebarLeftBackground.right
-                    bottomMargin: 10
-                    rightMargin: 10
-                }
+                x: sidebarLeftBackground.x + sidebarLeftBackground.width - implicitWidth - 10
+                y: sidebarLeftBackground.y + sidebarLeftBackground.height - implicitHeight - 10
                 z: 1000
                 implicitWidth: 34
                 implicitHeight: 34
