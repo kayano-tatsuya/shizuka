@@ -235,9 +235,9 @@ Scope { // Scope
             RippleButton {
                 id: leftLockButton
                 anchors {
-                    top: parent.top
+                    bottom: parent.bottom
                     right: parent.right
-                    topMargin: Appearance.sizes.hyprlandGapsOut + 8
+                    bottomMargin: Appearance.sizes.hyprlandGapsOut + 8
                     rightMargin: Appearance.sizes.hyprlandGapsOut + 8
                 }
                 z: 100
