@@ -59,12 +59,13 @@ Scope { // Scope
     }
 
     function togglePin() {
+        var pw = (sidebarLoader && sidebarLoader.active) ? sidebarLoader.item : null;
         if (!root.pin) {
-            GlobalFocusGrab.removeDismissable(panelWindow);
+            if (pw) GlobalFocusGrab.removeDismissable(pw);
             root.pin = true;
         } else {
             root.pin = false;
-            GlobalFocusGrab.addDismissable(panelWindow);
+            if (pw) GlobalFocusGrab.addDismissable(pw);
         }
     }
 
@@ -92,7 +93,7 @@ Scope { // Scope
 
     Loader {
         id: booruClickCatcherLoader
-        active: true
+        active: !root.pin
         sourceComponent: PanelWindow {
             id: booruClickCatcher
             visible: GlobalStates.sidebarLeftOpen
@@ -137,6 +138,7 @@ Scope { // Scope
                     if (GlobalStates.sidebarLeftOpen) {
                         closeAnimTimer.stop();
                         panelWindow.reallyVisible = true;
+                        Qt.callLater(function() { sidebarLeftBackground.forceActiveFocus(); });
                     } else if (panelWindow.animatedEntrance) {
                         closeAnimTimer.restart();
                     } else {
@@ -160,7 +162,7 @@ Scope { // Scope
             }
 
             exclusionMode: ExclusionMode.Normal
-            exclusiveZone: root.pin ? sidebarWidth : 0
+            exclusiveZone: 0
             implicitWidth: Appearance.sizes.sidebarWidthExtended + Appearance.sizes.elevationMargin
             WlrLayershell.namespace: "quickshell:sidebarLeft"
             // Hyprland 0.49: OnDemand is Exclusive, Exclusive just breaks click-outside-to-close
@@ -210,6 +212,7 @@ Scope { // Scope
             Connections {
                 target: GlobalFocusGrab
                 function onDismissed() {
+                    if (root.pin) return;
                     GlobalFocusGrab.suspended = false;
                     panelWindow.hide();
                     GlobalStates.sidebarLeftOpen = false;
@@ -270,6 +273,7 @@ Scope { // Scope
                 border.color: ColorUtils.transparentize(Appearance.colors.colLayer0Border, 0.8) 
                 radius: Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1
 
+                focus: GlobalStates.sidebarLeftOpen
                 readonly property bool animatedEntrance: panelWindow.animatedEntrance
                 readonly property bool sidebarOpen: GlobalStates.sidebarLeftOpen
                 x: Appearance.sizes.hyprlandGapsOut - (animatedEntrance && !sidebarOpen ? width : 0)
@@ -302,7 +306,7 @@ Scope { // Scope
                     if (event.key === Qt.Key_Escape) {
                         panelWindow.hide();
                     }
-                    if (event.modifiers === Qt.ControlModifier) {
+                    if (event.modifiers & Qt.ControlModifier) {
                         if (event.key === Qt.Key_O) {
                             panelWindow.extend = !panelWindow.extend;
                         } else if (event.key === Qt.Key_D) {
@@ -338,7 +342,7 @@ Scope { // Scope
                 color: Appearance.colors.colLayer0
 
                 Keys.onPressed: (event) => {
-                    if (event.modifiers === Qt.ControlModifier) {
+                    if (event.modifiers & Qt.ControlModifier) {
                         if (event.key === Qt.Key_D) {
                             root.toggleDetach();
                         }

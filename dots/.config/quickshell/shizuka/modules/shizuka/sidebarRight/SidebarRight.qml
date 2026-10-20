@@ -71,6 +71,7 @@ Scope {
         Connections {
             target: GlobalFocusGrab
             function onDismissed() {
+                if (root.pinned) return;
                 panelWindow.hide();
             }
         }
