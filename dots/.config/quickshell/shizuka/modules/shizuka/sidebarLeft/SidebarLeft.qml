@@ -231,35 +231,6 @@ Scope { // Scope
                 onClicked: panelWindow.hide()
             }
 
-            // Floating lock (pin) toggle.
-            RippleButton {
-                id: leftLockButton
-                anchors {
-                    bottom: sidebarLeftBackground.bottom
-                    right: sidebarLeftBackground.right
-                    bottomMargin: 8
-                    rightMargin: 8
-                }
-                z: 100
-                implicitWidth: 32
-                implicitHeight: 32
-                buttonRadius: Appearance.rounding.full
-                colBackground: ColorUtils.transparentize(Appearance.colors.colLayer0, 0.3)
-                colBackgroundHover: Appearance.colors.colLayer2Hover
-                toggled: root.pin
-                colBackgroundToggled: Appearance.colors.colPrimaryContainer
-                onClicked: root.togglePin()
-                contentItem: MaterialSymbol {
-                    anchors.centerIn: parent
-                    text: root.pin ? "lock" : "lock_open"
-                    iconSize: Appearance.font.pixelSize.normal
-                    color: root.pin ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer1
-                }
-                StyledToolTip {
-                    text: root.pin ? Translation.tr("Unpin sidebar (allow close)") : Translation.tr("Pin sidebar (keep open)")
-                }
-            }
-
             StyledRectangularShadow {
                 target: sidebarLeftBackground
                 radius: sidebarLeftBackground.radius
@@ -316,6 +287,35 @@ Scope { // Scope
                             root.togglePin();
                         }
                         event.accepted = true;
+                    }
+                }
+
+                // Floating lock (pin) toggle, overlaid on the sidebar.
+                RippleButton {
+                    id: leftLockButton
+                    anchors {
+                        bottom: sidebarLeftBackground.bottom
+                        right: sidebarLeftBackground.right
+                        bottomMargin: 8
+                        rightMargin: 8
+                    }
+                    z: 100
+                    implicitWidth: 28
+                    implicitHeight: 28
+                    buttonRadius: Appearance.rounding.full
+                    colBackground: ColorUtils.transparentize(Appearance.colors.colLayer0, 0.3)
+                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                    toggled: root.pin
+                    colBackgroundToggled: Appearance.colors.colPrimaryContainer
+                    onClicked: root.togglePin()
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: root.pin ? "lock" : "lock_open"
+                        iconSize: Appearance.font.pixelSize.small
+                        color: root.pin ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer1
+                    }
+                    StyledToolTip {
+                        text: root.pin ? Translation.tr("Unpin sidebar (allow close)") : Translation.tr("Pin sidebar (keep open)")
                     }
                 }
             }
