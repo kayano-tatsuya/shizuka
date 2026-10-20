@@ -61,9 +61,9 @@ Scope { // Scope
     function togglePin() {
         if (!root.pin) {
             GlobalFocusGrab.removeDismissable(panelWindow);
-            pinWithFunnyHyprlandWorkaroundProc.doIt()
+            root.pin = true;
         } else {
-            root.pin = !root.pin;
+            root.pin = false;
             GlobalFocusGrab.addDismissable(panelWindow);
         }
     }
