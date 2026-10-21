@@ -96,6 +96,7 @@ Rectangle {
         root.thumbFetchFailed = false;
         root.fetchThumbnail();
     }
+    onFetchThumbChanged: root.fetchThumbnail()
     onGatedChanged: if (!root.gated) root.fetchThumbnail()
     Component.onCompleted: root.fetchThumbnail()
 
@@ -327,10 +328,14 @@ Rectangle {
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectFit
                 source: root.gated ? "" : (root.fetchThumb
-                    ? (root.thumbFetchFailed ? root.displayUrl : root.localThumbPath)
+                    ? (root.thumbFetchFailed || root.localThumbPath.length === 0 ? root.displayUrl : "file://" + root.localThumbPath)
                     : root.displayUrl)
-                fallbacks: root.fetchThumb ? [] : root.remoteThumbFallbacks
-                sourceSize.width: Math.max(1, width) * 2
+                fallbacks: root.fetchThumb ? root.remoteThumbFallbacks : root.remoteThumbFallbacks
+                onStatusChanged: {
+                    if (status === Image.Error && root.fetchThumb && !root.thumbFetchFailed) {
+                        root.thumbFetchFailed = true;
+                    }
+                }
             }
 
             // Loading / failure feedback so a slow (or stalled) preview never
