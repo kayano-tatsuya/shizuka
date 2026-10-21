@@ -115,27 +115,39 @@ Singleton {
             currentSource = item.src
             currentCache = item.dst
             if (!currentSource || !currentCache) { processNext(); return }
-            root._checkFileExists(currentCache, (cacheExists) => {
-                if (cacheExists) { processNext(); return }
-                const radius = "%[fx:min(w,h)*" + (root.cornerRadiusPercent / 100) + "]"
-                command = [
-                    "magick", currentSource,
-                    "-alpha", "set",
-                    "(", "+clone",
-                        "-alpha", "transparent",
+            const runMagick = () => {
+                root._checkFileExists(currentCache, (cacheExists) => {
+                    if (cacheExists) { processNext(); return }
+                    const radius = "%[fx:min(w,h)*" + (root.cornerRadiusPercent / 100) + "]"
+                    command = [
+                        "magick", currentSource,
+                        "-alpha", "set",
+                        "(", "+clone",
+                            "-alpha", "transparent",
+                            "-background", "none",
+                            "-fill", "white",
+                            "-draw", "roundrectangle 0,0,%[fx:w-1],%[fx:h-1]," + radius + "," + radius,
+                        ")",
+                        "-compose", "Dst_In", "-composite",
+                        "-strip",
+                        "-quality", "82",
+                        "-define", "webp:method=6",
+                        "-define", "webp:alpha-quality=90",
                         "-background", "none",
-                        "-fill", "white",
-                        "-draw", "roundrectangle 0,0,%[fx:w-1],%[fx:h-1]," + radius + "," + radius,
-                    ")",
-                    "-compose", "Dst_In", "-composite",
-                    "-strip",
-                    "-quality", "82",
-                    "-define", "webp:method=6",
-                    "-define", "webp:alpha-quality=90",
-                    "-background", "none",
-                    currentCache
-                ]
-                running = true
+                        currentCache
+                    ]
+                    running = true
+                })
+            }
+            root._checkFileExists(currentSource, (srcExists) => {
+                if (!srcExists) {
+                    root._ensureSource(item, (ok) => {
+                        if (!ok) { processNext(); return }
+                        runMagick()
+                    })
+                    return
+                }
+                runMagick()
             })
         }
     }
