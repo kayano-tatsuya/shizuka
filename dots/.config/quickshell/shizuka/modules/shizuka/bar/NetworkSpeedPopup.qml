@@ -21,9 +21,14 @@ StyledPopup {
         return Translation.tr("Not connected")
     }
     readonly property string connectionDetails: {
-        if (Network.ethernet)
+        if (Network.ethernet) {
+            if (Network.connectivity !== "full" && Network.connectivity !== "unknown")
+                return Translation.tr("Ethernet · No internet")
             return Translation.tr("Ethernet · Connected")
+        }
         if (wifiConnected) {
+            if (Network.connectivity !== "full" && Network.connectivity !== "unknown")
+                return Translation.tr("Wi-Fi · No internet")
             const strength = Network.networkStrength > 0
                 ? ` · ${Network.networkStrength}%`
                 : ""
@@ -31,7 +36,8 @@ StyledPopup {
         }
         switch (Network.wifiStatus) {
         case "connecting": return Translation.tr("Connecting")
-        case "limited": return Translation.tr("Limited connection")
+        case "portal": return Translation.tr("Sign in to network")
+        case "limited": return Translation.tr("No internet")
         case "disabled": return Translation.tr("Wi-Fi disabled")
         default: return Translation.tr("Disconnected")
         }
@@ -135,7 +141,9 @@ StyledPopup {
                 iconSize: Appearance.font.pixelSize.large
                 implicitSize: 36
                 color: Appearance.colors.colPrimaryContainer
-                colSymbol: Appearance.colors.colPrimary
+                colSymbol: (Network.connectivity !== "full" && Network.connectivity !== "unknown" && (Network.wifi || Network.ethernet))
+                    ? Appearance.colors.colError
+                    : Appearance.colors.colPrimary
             }
 
             ColumnLayout {
@@ -178,6 +186,25 @@ StyledPopup {
                 speed: root.downloadSpeed
                 total: root.downloadedBytes
                 accentColor: Appearance.colors.colPrimary
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            visible: (Network.wifi || Network.ethernet) && (Network.captivePortal || (Network.connectivity !== "full" && Network.connectivity !== "unknown"))
+            spacing: 6
+
+            DialogButton {
+                Layout.fillWidth: true
+                buttonText: Network.captivePortal
+                    ? Translation.tr("Sign in to network")
+                    : Translation.tr("Open network portal")
+                colBackground: Appearance.colors.colLayer4
+                colBackgroundHover: Appearance.colors.colLayer4Hover
+                colRipple: Appearance.colors.colLayer4Active
+                onClicked: {
+                    Network.openPublicWifiPortal()
+                }
             }
         }
 

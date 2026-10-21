@@ -32,6 +32,12 @@ Singleton {
     })
     property string wifiStatus: "disconnected"
 
+    // Actual internet reachability, as reported by NetworkManager's connectivity check
+    // (none, portal, limited, full, or unknown before the first probe completes).
+    property string connectivity: "unknown"
+    readonly property bool internet: root.connectivity === "full"
+    readonly property bool captivePortal: root.connectivity === "portal"
+
     property string networkName: ""
     property int networkStrength
     property string networkInterface: ""
@@ -192,7 +198,7 @@ Singleton {
         }
         onExited: (exitCode, exitStatus) => {
             const lines = updateConnectionType.buffer.trim().split('\n');
-            const connectivity = lines.pop() // none, limited, full
+            const connectivity = (lines.pop() || "unknown").trim() || "unknown" // none, portal, limited, full
             let hasEthernet = false;
             let hasWifi = false;
             let wifiStatus = "disconnected";
@@ -205,11 +211,14 @@ Singleton {
                     }
                     else if (line.includes("connected")) {
                         hasWifi = true;
-                        wifiStatus = "connected"
-
-                        if (connectivity === "limited") {
-                            hasWifi = false;
+                        if (connectivity === "full") {
+                            wifiStatus = "connected"
+                        } else if (connectivity === "portal") {
+                            wifiStatus = "portal"
+                        } else if (connectivity === "limited" || connectivity === "none") {
                             wifiStatus = "limited"
+                        } else {
+                            wifiStatus = "connected"
                         }
                     }
                     else if (line.includes("connecting")) {
@@ -223,6 +232,7 @@ Singleton {
             root.wifiStatus = wifiStatus;
             root.ethernet = hasEthernet;
             root.wifi = hasWifi;
+            root.connectivity = connectivity;
         }
     }
 

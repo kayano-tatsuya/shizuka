@@ -91,6 +91,17 @@ Scope { // Scope
         }
     }
 
+    Connections {
+        target: GlobalStates
+        function onSidebarLeftOpenChanged() {
+            // Reset detached state whenever the sidebar closes so the next
+            // open starts attached instead of staying permanently detached.
+            if (!GlobalStates.sidebarLeftOpen && root.detach) {
+                root.detach = false;
+            }
+        }
+    }
+
     Loader {
         id: booruClickCatcherLoader
         active: !root.pin
@@ -200,6 +211,10 @@ Scope { // Scope
                     default: return 0;
                     }
                 }
+            }
+
+            mask: Region {
+                item: panelWindow.animatedEntrance ? fullMaskArea : sidebarLeftBackground
             }
 
             onVisibleChanged: {

@@ -128,7 +128,9 @@ Item {
         MaterialSymbol {
             text: Network.materialSymbol
             iconSize: Appearance.font.pixelSize.larger
-            color: root.iconColor
+            color: ((Network.wifi || Network.ethernet) && Network.connectivity !== "full" && Network.connectivity !== "unknown")
+                ? Appearance.colors.colError
+                : root.iconColor
         }
         MaterialSymbol {
             visible: BluetoothStatus.available
