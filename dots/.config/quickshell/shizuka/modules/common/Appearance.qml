@@ -218,13 +218,13 @@ Singleton {
         property int unsharpen: 2
         property int unsharpenmore: 6
         property int verysmall: 8
-        property int small: 8
-        property int normal: 16
-        property int large: 16
-        property int verylarge: 20
+        property int small: 12
+        property int normal: 17
+        property int large: 23
+        property int verylarge: 30
         property int full: 9999
         property int screenRounding: large
-        property int windowRounding: 16
+        property int windowRounding: 18
     }
 
     font: QtObject {
