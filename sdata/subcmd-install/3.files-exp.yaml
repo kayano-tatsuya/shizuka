@@ -67,6 +67,10 @@ patterns:
   - from: "dots/.config/fontconfig"
     to: "$XDG_CONFIG_HOME/fontconfig"
     mode: "sync"
+  # Fastfetch (terminal system info)
+  - from: "dots/.config/fastfetch"
+    to: "$XDG_CONFIG_HOME/fastfetch"
+    mode: "sync"
   # MISC config directories (other .config directories)
   - from: "dots/.config/fuzzel"
     to: "$XDG_CONFIG_HOME/fuzzel"
