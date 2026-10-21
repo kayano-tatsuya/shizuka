@@ -214,8 +214,6 @@ Singleton {
         _mkdirProc.running = true
     }
 
-    property var _pendingExpected: []
-
     property Process _mkdirProc: Process {
         onExited: (code) => {
             if (code === 0) {
