@@ -26,6 +26,13 @@ Rectangle {
     property bool allowNsfw: false
     property bool bookmarked: false
     property bool isWaifu: false
+    readonly property bool pinned: {
+        const pins = (Persistent.states.booru.pins) || [];
+        const id = root.image?.id;
+        const prov = root.image?.provider ?? (root.image?.api && root.image.api.value) ?? "";
+        if (id === undefined || id === null) return false;
+        return pins.some(p => p && String(p.id) === String(id) && ((p.provider ?? (p.api && p.api.value) ?? "") === prov));
+    }
 
     signal closeRequested()
     signal toggleBookmarkRequested()
@@ -113,6 +120,24 @@ Rectangle {
         wallpaperFetch.command = ["bash", "-c",
             `mkdir -p '${StringUtils.shellSingleQuoteEscape(dir)}' && curl -fsSL '${StringUtils.shellSingleQuoteEscape(root.fullUrl)}'${uaArg}${refererArg} -o '${StringUtils.shellSingleQuoteEscape(target)}'`];
         wallpaperFetch.running = true;
+    }
+
+    function togglePinned() {
+        if (!root.image) return;
+        const img = root.image;
+        const apiValue = img.provider || (img.api && img.api.value) || "";
+        const extRaw = (img.extension || "").toLowerCase();
+        const urlExt = (img.file_url || img.sample_url || "").split('.').pop().split('?')[0].toLowerCase();
+        const ext = extRaw || urlExt || "jpg";
+        const pins = ((Persistent.states.booru.pins) || []).slice();
+        const idx = pins.findIndex(p => p && String(p.id) === String(img.id) && ((p.provider ?? (p.api && p.api.value) ?? "") === apiValue));
+        if (idx >= 0) {
+            pins.splice(idx, 1);
+        } else {
+            pins.unshift(Object.assign({}, img, { provider: apiValue, extension: ext }));
+        }
+        Persistent.states.booru.pins = pins;
+        FastfetchPins.scheduleSync();
     }
 
     component DetailAction: RippleButton {
@@ -341,6 +366,13 @@ Rectangle {
                 label: root.bookmarked ? Translation.tr("Bookmarked") : Translation.tr("Bookmark")
                 active: root.bookmarked
                 onTriggered: root.toggleBookmarkRequested()
+            }
+            DetailAction {
+                Layout.fillWidth: true
+                symbol: root.pinned ? "push_pin" : "push_pin"
+                label: root.pinned ? Translation.tr("Pinned to terminal") : Translation.tr("Pin to terminal")
+                active: root.pinned
+                onTriggered: root.togglePinned()
             }
             DetailAction {
                 Layout.fillWidth: true

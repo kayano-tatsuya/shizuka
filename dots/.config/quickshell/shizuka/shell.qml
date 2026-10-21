@@ -42,6 +42,7 @@ ShellRoot {
 
     Component.onCompleted: {
         MaterialThemeLoader.reapplyTheme()
+        FastfetchPins.scheduleSync()
         Hyprsunset.load()
         FirstRunExperience.load()
         ConflictKiller.load()

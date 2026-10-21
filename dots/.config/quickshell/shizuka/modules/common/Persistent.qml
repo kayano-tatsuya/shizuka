@@ -79,6 +79,10 @@ Singleton {
                 property string provider: "yandere"
                 // Bookmarked images (full mapped image objects), newest first.
                 property list<var> bookmarks: []
+                // Images pinned to the terminal fastfetch logo (full mapped
+                // image objects), newest first. Synced to ~/.config/fastfetch/cache
+                // as rounded WebP by FastfetchPins.
+                property list<var> pins: []
             }
 
             property JsonObject waifu: JsonObject {
