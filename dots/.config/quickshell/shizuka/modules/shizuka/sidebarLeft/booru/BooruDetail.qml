@@ -56,6 +56,51 @@ Rectangle {
     readonly property string sourceUrl: image?.source ?? ""
     // Gelbooru hotlink-protects its image CDN: downloads need a Referer.
     readonly property string imageReferer: image?.imageReferer ?? ""
+    // Referer-protected hosts (Gelbooru) hotlink-protect their CDN: QML's
+    // Image cannot send a Referer header, so pull the preview through curl
+    // into the cache and display the local copy (mirrors BooruTile).
+    readonly property string remoteThumb: root.image?.preview_url ?? root.image?.sample_url ?? ""
+    readonly property var remoteThumbFallbacks: {
+        const list = [];
+        if (root.image?.sample_url) list.push(root.image.sample_url);
+        if (root.image?.file_url) list.push(root.image.file_url);
+        if (root.image?.preview_url) list.push(root.image.preview_url);
+        return list;
+    }
+    readonly property bool fetchThumb: root.imageReferer.length > 0 && root.remoteThumb.length > 0
+    readonly property string thumbCachePath: {
+        if (root.remoteThumb.length === 0) return "";
+        const base = decodeURIComponent(root.remoteThumb.substring(root.remoteThumb.lastIndexOf('/') + 1));
+        return base.length > 0 ? `${Directories.booruPreviews}/${base}` : "";
+    }
+    property string localThumbPath: ""
+    property bool thumbFetchStarted: false
+
+    function fetchThumbnail() {
+        if (!root.fetchThumb || root.gated || root.thumbFetchStarted) return;
+        root.thumbFetchStarted = true;
+        const dir = StringUtils.shellSingleQuoteEscape(Directories.booruPreviews);
+        const file = StringUtils.shellSingleQuoteEscape(root.thumbCachePath);
+        const url = StringUtils.shellSingleQuoteEscape(root.remoteThumb);
+        const referer = StringUtils.shellSingleQuoteEscape(root.imageReferer);
+        const ua = Config.options?.networking?.userAgent ?? "";
+        const uaArg = ua ? ` -H 'User-Agent: ${StringUtils.shellSingleQuoteEscape(ua)}'` : "";
+        thumbFetch.command = ["bash", "-c",
+            `mkdir -p '${dir}' && { [ -s '${file}' ] || curl -fsSL --max-time 15 -H 'Referer: ${referer}'${uaArg} '${url}' -o '${file}'; } && [ -s '${file}' ]`];
+        thumbFetch.running = true;
+    }
+    onImageChanged: root.fetchThumbnail()
+    onGatedChanged: if (!root.gated) root.fetchThumbnail()
+    Component.onCompleted: root.fetchThumbnail()
+
+    Process {
+        id: thumbFetch
+        onExited: (exitCode) => {
+            if (exitCode === 0 && root.thumbCachePath.length > 0)
+                root.localThumbPath = root.thumbCachePath;
+        }
+    }
+
     readonly property var tagList: String(image?.tags ?? "").split(/\s+/).filter(tag => tag.length > 0)
 
     readonly property string ratingLabel: {
@@ -125,12 +170,12 @@ Rectangle {
     function togglePinned() {
         if (!root.image) return;
         const img = root.image;
-        const apiValue = img.provider || (img.api && img.api.value) || "";
+        const apiValue = Booru.currentProvider || img.provider || (img.api && img.api.value) || "";
         const extRaw = (img.extension || "").toLowerCase();
-        const urlExt = (img.file_url || img.sample_url || "").split('.').pop().split('?')[0].toLowerCase();
-        const ext = extRaw || urlExt || "jpg";
+        const urlExt = (img.file_url || img.sample_url || img.preview_url || "").split('.').pop().split('?')[0].toLowerCase();
+        const ext = (extRaw && extRaw !== "jpg" ? extRaw : (urlExt && urlExt.length <= 5 ? urlExt : "jpg"));
         const pins = ((Persistent.states.booru.pins) || []).slice();
-        const idx = pins.findIndex(p => p && String(p.id) === String(img.id) && ((p.provider ?? (p.api && p.api.value) ?? "") === apiValue));
+        const idx = pins.findIndex(p => p && String(p.id) === String(img.id) && ((p.provider ?? "") === apiValue));
         if (idx >= 0) {
             pins.splice(idx, 1);
         } else {
@@ -272,7 +317,8 @@ Rectangle {
                 id: preview
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectFit
-                source: root.gated ? "" : root.displayUrl
+                source: root.gated ? "" : (root.fetchThumb ? root.localThumbPath : root.displayUrl)
+                fallbacks: root.fetchThumb ? [] : root.remoteThumbFallbacks
                 sourceSize.width: Math.max(1, width) * 2
             }
 
