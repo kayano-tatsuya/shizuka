@@ -65,7 +65,7 @@ apply_anyterm() {
     if [[ $file =~ ^/dev/pts/[0-9]+$ ]]; then
       {
       cat "$STATE_DIR"/user/generated/terminal/sequences.txt >"$file"
-      } & disown || true
+      } || true
     fi
   done
 }
@@ -85,11 +85,12 @@ CONFIG_FILE="$XDG_CONFIG_HOME/shizuka/config.json"
 if [ -f "$CONFIG_FILE" ]; then
   enable_terminal=$(jq -r '.appearance.wallpaperTheming.enableTerminal' "$CONFIG_FILE")
   if [ "$enable_terminal" = "true" ]; then
-    apply_term &
+    apply_term
   fi
 else
   echo "Config file not found at $CONFIG_FILE. Applying terminal theming by default."
-  apply_term &
+  apply_term
 fi
 
 # apply_qt & # Qt theming is already handled by kde-material-colors
+wait
