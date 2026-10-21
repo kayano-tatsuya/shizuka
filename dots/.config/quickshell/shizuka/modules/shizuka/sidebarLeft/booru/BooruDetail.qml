@@ -75,6 +75,7 @@ Rectangle {
     }
     property string localThumbPath: ""
     property bool thumbFetchStarted: false
+    property bool thumbFetchFailed: false
 
     function fetchThumbnail() {
         if (!root.fetchThumb || root.gated || root.thumbFetchStarted) return;
@@ -89,15 +90,23 @@ Rectangle {
             `mkdir -p '${dir}' && { [ -s '${file}' ] || curl -fsSL --max-time 15 -H 'Referer: ${referer}'${uaArg} '${url}' -o '${file}'; } && [ -s '${file}' ]`];
         thumbFetch.running = true;
     }
-    onImageChanged: root.fetchThumbnail()
+    onImageChanged: {
+        root.thumbFetchStarted = false;
+        root.localThumbPath = "";
+        root.thumbFetchFailed = false;
+        root.fetchThumbnail();
+    }
     onGatedChanged: if (!root.gated) root.fetchThumbnail()
     Component.onCompleted: root.fetchThumbnail()
 
     Process {
         id: thumbFetch
         onExited: (exitCode) => {
-            if (exitCode === 0 && root.thumbCachePath.length > 0)
+            if (exitCode === 0 && root.thumbCachePath.length > 0) {
                 root.localThumbPath = root.thumbCachePath;
+            } else {
+                root.thumbFetchFailed = true;
+            }
         }
     }
 
@@ -317,7 +326,9 @@ Rectangle {
                 id: preview
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectFit
-                source: root.gated ? "" : (root.fetchThumb ? root.localThumbPath : root.displayUrl)
+                source: root.gated ? "" : (root.fetchThumb
+                    ? (root.thumbFetchFailed ? root.displayUrl : root.localThumbPath)
+                    : root.displayUrl)
                 fallbacks: root.fetchThumb ? [] : root.remoteThumbFallbacks
                 sourceSize.width: Math.max(1, width) * 2
             }
@@ -328,7 +339,7 @@ Rectangle {
             ColumnLayout {
                 anchors.centerIn: parent
                 spacing: 4
-                visible: !root.gated && preview.status !== Image.Ready && root.displayUrl.length > 0
+                visible: !root.gated && !root.thumbFetchFailed && preview.status !== Image.Ready && root.displayUrl.length > 0
                 MaterialLoadingIndicator {
                     Layout.alignment: Qt.AlignHCenter
                     visible: preview.status === Image.Loading || preview.status === Image.Null
@@ -336,7 +347,7 @@ Rectangle {
                 }
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
-                    visible: preview.status === Image.Error
+                    visible: preview.status === Image.Error || root.thumbFetchFailed
                     text: Translation.tr("Failed to load image")
                     color: Appearance.colors.colOnLayer1
                     font.pixelSize: Appearance.font.pixelSize.smaller
