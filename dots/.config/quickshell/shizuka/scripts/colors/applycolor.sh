@@ -41,8 +41,13 @@ apply_kitty() {
     sed -i "s/${colorlist[$i]} #/${colorvalues[$i]#\#}/g" "$STATE_DIR"/user/generated/terminal/kitty-theme.conf
   done
 
-  # Reload
-  kill -SIGUSR1 $(pidof kitty)
+  # Reload: prefer remote control (reliable, reads the included colors file),
+  # fall back to SIGUSR1 for older kitty processes without remote control.
+  if command -v kitty >/dev/null 2>&1 && [ -S /tmp/kitty ]; then
+    kitty @ --to unix:/tmp/kitty load-config 2>/dev/null || kill -SIGUSR1 $(pidof kitty) 2>/dev/null || true
+  else
+    kill -SIGUSR1 $(pidof kitty) 2>/dev/null || true
+  fi
 }
 
 apply_anyterm() {
