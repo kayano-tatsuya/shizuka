@@ -26,13 +26,16 @@ Rectangle {
     property bool allowNsfw: false
     property bool bookmarked: false
     property bool isWaifu: false
-    readonly property bool pinned: {
+    property bool pinned: false
+
+    function recomputePinned() {
         const pins = (Persistent.states.booru.pins) || [];
         const id = root.image?.id;
-        const prov = root.image?.provider ?? (root.image?.api && root.image.api.value) ?? "";
-        if (id === undefined || id === null) return false;
-        return pins.some(p => p && String(p.id) === String(id) && ((p.provider ?? (p.api && p.api.value) ?? "") === prov));
+        const prov = root.image?.provider ?? (root.image?.api && root.image.api.value) ?? Booru.currentProvider ?? "";
+        if (id === undefined || id === null) { root.pinned = false; return; }
+        root.pinned = pins.some(p => p && String(p.id) === String(id) && ((p.provider ?? (p.api && p.api.value) ?? "") === prov));
     }
+
 
     signal closeRequested()
     signal toggleBookmarkRequested()
@@ -94,6 +97,7 @@ Rectangle {
         root.thumbFetchStarted = false;
         root.localThumbPath = "";
         root.thumbFetchFailed = false;
+        root.recomputePinned();
         root.fetchThumbnail();
     }
     onFetchThumbChanged: root.fetchThumbnail()
@@ -192,6 +196,7 @@ Rectangle {
             pins.unshift(Object.assign({}, img, { provider: apiValue, extension: ext }));
         }
         Persistent.states.booru.pins = pins;
+        root.recomputePinned();
         FastfetchPins.scheduleSync();
     }
 
