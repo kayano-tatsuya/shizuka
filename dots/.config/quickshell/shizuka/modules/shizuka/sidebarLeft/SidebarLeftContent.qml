@@ -7,6 +7,7 @@ import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 import Qt.labs.synchronizer
 import "booru"
+import "keybinds"
 
 Item {
     id: root
@@ -23,6 +24,7 @@ Item {
         ...(root.translatorEnabled ? [{"icon": "translate", "name": Translation.tr("Translator")}] : []),
         ...(root.mediaEnabled ? [{"icon": "music_note", "name": Translation.tr("Media")}] : []),
         ...((root.booruEnabled && !root.weebCloset) ? [{"icon": "image", "name": Translation.tr("Booru")}] : [])
+        , {"icon": "keyboard", "name": Translation.tr("Key Binds")}
     ]
     property int tabCount: swipeView.count
 
@@ -88,6 +90,7 @@ Item {
                     ...(root.mediaEnabled ? [media.createObject()] : []),
                     ...((root.tabButtonList.length === 0 || (!root.aiChatEnabled && !root.translatorEnabled && root.weebCloset)) ? [placeholder.createObject()] : []),
                     ...(root.booruEnabled ? [booru.createObject()] : []),
+                    keybinds.createObject(),
                 ]
             }
         }
@@ -152,6 +155,10 @@ Item {
     Component {
         id: booru
         BooruViewer {}
+    }
+    Component {
+        id: keybinds
+        KeyBinds {}
     }
     Component {
         id: placeholder

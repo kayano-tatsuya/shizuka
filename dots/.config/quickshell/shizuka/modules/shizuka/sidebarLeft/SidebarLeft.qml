@@ -69,6 +69,23 @@ Scope { // Scope
         }
     }
 
+    function showKeybinds() {
+        GlobalStates.sidebarLeftOpen = true;
+        Qt.callLater(() => {
+            const content = root.sidebarContent;
+            if (!content || !content.swipeView) return;
+            const tabs = content.tabButtonList || [];
+            for (let i = 0; i < tabs.length; i++) {
+                if (tabs[i].name === Translation.tr("Key Binds")) {
+                    content.swipeView.currentIndex = i;
+                    if (content.verticalTabBar)
+                        content.verticalTabBar.currentIndex = i;
+                    return;
+                }
+            }
+        });
+    }
+
     Component.onCompleted: {
         root.sidebarContent = contentComponent.createObject(null, {
             "scopeRoot": root,
@@ -382,6 +399,10 @@ Scope { // Scope
         function open(): void {
             GlobalStates.sidebarLeftOpen = true
         }
+
+        function showKeybinds(): void {
+            root.showKeybinds()
+        }
     }
 
     CompositorGlobalShortcut {
@@ -417,6 +438,15 @@ Scope { // Scope
 
         onPressed: {
             root.detach = !root.detach;
+        }
+    }
+
+    CompositorGlobalShortcut {
+        name: "sidebarLeftShowKeybinds"
+        description: "Open left sidebar on the Key Binds tab"
+
+        onPressed: {
+            root.showKeybinds();
         }
     }
 
