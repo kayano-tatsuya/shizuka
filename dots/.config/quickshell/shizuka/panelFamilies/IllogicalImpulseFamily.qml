@@ -4,6 +4,7 @@ import Quickshell
 import qs.modules.common
 import qs.modules.shizuka.background
 import qs.modules.shizuka.bar
+import qs.modules.shizuka.cheatsheet
 import qs.modules.shizuka.dock
 import qs.modules.shizuka.equalizer
 import qs.modules.shizuka.lock
@@ -46,6 +47,7 @@ Scope {
     PanelLoader { component: SessionScreen {} }
     PanelLoader { component: SidebarLeft {} }
     PanelLoader { component: SidebarRight {} }
+    PanelLoader { component: Cheatsheet {} }
     PanelLoader { extraCondition: Config.options.bar.vertical; component: VerticalBar {} }
     PanelLoader { component: WallpaperSelector {} }
     PanelLoader { component: Settings {} }
