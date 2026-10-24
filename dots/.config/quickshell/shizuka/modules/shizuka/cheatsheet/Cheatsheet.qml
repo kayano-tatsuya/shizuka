@@ -20,8 +20,8 @@ Scope {
     }
 
     // Target (floating) panel size.
-    readonly property int panelWidth: 720
-    readonly property int panelHeight: 720
+    readonly property int panelWidth: 1080
+    readonly property int panelHeight: 1080
 
     Loader {
         id: cheatsheetLoader
