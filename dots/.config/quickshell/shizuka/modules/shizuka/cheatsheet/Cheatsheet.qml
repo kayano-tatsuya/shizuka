@@ -19,6 +19,10 @@ Scope {
         GlobalStates.cheatsheetOpen = !GlobalStates.cheatsheetOpen;
     }
 
+    // Target (floating) panel size.
+    readonly property int panelWidth: 720
+    readonly property int panelHeight: 720
+
     Loader {
         id: cheatsheetLoader
         active: GlobalStates.cheatsheetOpen
@@ -30,15 +34,19 @@ Scope {
             visible: true
             color: "transparent"
 
+            // Centered floating panel (all anchors + margins).
             anchors {
+                top: true
                 bottom: true
                 left: true
                 right: true
             }
             margins {
-                bottom: 0
+                top: Math.max(0, (cheatsheetWindow.screen?.height ?? 1080) - root.panelHeight) / 2
+                bottom: Math.max(0, (cheatsheetWindow.screen?.height ?? 1080) - root.panelHeight) / 2
+                left: Math.max(0, (cheatsheetWindow.screen?.width ?? 1920) - root.panelWidth) / 2
+                right: Math.max(0, (cheatsheetWindow.screen?.width ?? 1920) - root.panelWidth) / 2
             }
-            implicitHeight: Math.min(600, Quickshell.screens[0]?.height * 0.6 ?? 500)
 
             HyprlandFocusGrab {
                 id: grab
