@@ -269,7 +269,7 @@ Scope { // Scope
             RippleButton {
                 id: leftLockButton
                 x: sidebarLeftBackground.x + sidebarLeftBackground.width - implicitWidth - 10
-                y: sidebarLeftBackground.y + sidebarLeftBackground.height - implicitHeight - 10
+                y: sidebarLeftBackground.y + 10
                 z: 1000
                 implicitWidth: 34
                 implicitHeight: 34

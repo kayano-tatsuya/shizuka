@@ -93,9 +93,9 @@ Scope {
         RippleButton {
             id: rightLockButton
             anchors {
-                bottom: parent.bottom
+                top: parent.top
                 left: parent.left
-                bottomMargin: 8
+                topMargin: 8
                 leftMargin: 8
             }
             z: 100
