@@ -580,10 +580,11 @@ Singleton {
         // Append credentials for providers that require auth (danbooru/gelbooru),
         // mirroring constructRequestUrl. Without these the tag endpoint returns
         // 401 and no suggestions are shown.
-        const auth = root.authParams(provider)
+        const auth = root.authParams(currentProvider)
         if (auth.length > 0) {
             url += (url.indexOf("?") === -1 ? "?" : "&") + auth.join("&")
         }
+
 
         var xhr = new XMLHttpRequest()
         currentTagRequest = xhr
@@ -596,7 +597,6 @@ Singleton {
                     // console.log("[Booru] Raw response: " + xhr.responseText)
                     var response = JSON.parse(xhr.responseText)
                     response = provider.tagMapFunc(response)
-                    // console.log("[Booru] Mapped response: " + JSON.stringify(response))
                     root.tagSuggestion(query, response)
                 } catch (e) {
                     console.log("[Booru] Failed to parse response: " + e)

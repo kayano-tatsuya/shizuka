@@ -108,6 +108,7 @@ Item {
     // A tag chip in the detail panel was clicked: add it to the search and run.
 
 
+
     function activateTag(tag) {
         if (!tag || tag.length === 0) return;
         const parts = root.tagText.trim().split(/\s+/).filter(part => part.length > 0);
