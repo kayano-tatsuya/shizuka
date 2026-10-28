@@ -577,6 +577,14 @@ Singleton {
         }
         var url = provider.tagSearchTemplate.replace("{{query}}", encodeURIComponent(query))
 
+        // Append credentials for providers that require auth (danbooru/gelbooru),
+        // mirroring constructRequestUrl. Without these the tag endpoint returns
+        // 401 and no suggestions are shown.
+        const auth = root.authParams(provider)
+        if (auth.length > 0) {
+            url += (url.indexOf("?") === -1 ? "?" : "&") + auth.join("&")
+        }
+
         var xhr = new XMLHttpRequest()
         currentTagRequest = xhr
         xhr.open("GET", url)

@@ -378,50 +378,59 @@ Item {
                 Rectangle {
                     id: suggestionPopup
                     z: 100
-                    visible: root.suggestionList.length > 0 && tagField.activeFocus && !root.bookmarksMode
+                    visible: (Config.options?.sidebar?.booru?.showTagSuggestions ?? true)
+                        && root.suggestionList.length > 0 && tagField.activeFocus && !root.bookmarksMode
                     x: 6
                     y: 2
                     width: Math.max(140, tagFieldArea.width - 12)
-                    height: Math.min(220, suggColumn.implicitHeight + 12)
+                    height: Math.min(220, suggScroll.contentHeight + 12)
                     radius: Appearance.rounding.small
-                    color: Appearance.colors.colLayer2
+                    color: Appearance.colors.colLayer1
                     border.width: 1
                     border.color: Appearance.colors.colOutlineVariant
                     clip: true
 
-                    Column {
-                        id: suggColumn
+                    StyledFlickable {
+                        id: suggScroll
                         anchors.fill: parent
                         anchors.margins: 6
-                        spacing: 2
+                        contentWidth: width
+                        contentHeight: suggColumn.implicitHeight
+                        boundsBehavior: Flickable.StopAtBounds
 
-                        Repeater {
-                            model: root.suggestionList.slice(0, 8)
-                            delegate: RippleButton {
-                                required property var modelData
-                                width: suggColumn.width
-                                implicitHeight: 30
-                                buttonRadius: Appearance.rounding.small
-                                colBackground: "transparent"
-                                colBackgroundHover: Appearance.colors.colLayer2Hover
-                                rippleEnabled: false
-                                contentItem: StyledText {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 8
-                                    anchors.rightMargin: 8
-                                    verticalAlignment: Text.AlignVCenter
-                                    elide: Text.ElideRight
-                                    text: modelData.name + (modelData.count !== undefined ? "  (" + modelData.count + ")" : "")
-                                    color: Appearance.colors.colOnLayer1
-                                    font.pixelSize: Appearance.font.pixelSize.small
-                                }
-                                onClicked: {
-                                    const parts = root.tagText.trim().split(/\s+/);
-                                    parts[parts.length - 1] = modelData.name;
-                                    root.tagText = parts.join(" ") + " ";
-                                    tagField.text = root.tagText;
-                                    root.suggestionList = [];
-                                    tagField.forceActiveFocus();
+                        Column {
+                            id: suggColumn
+                            width: suggScroll.width
+                            spacing: 2
+
+                            Repeater {
+                                model: root.suggestionList.slice(0, 15)
+                                delegate: RippleButton {
+                                    required property var modelData
+                                    width: suggColumn.width
+                                    implicitHeight: 28
+                                    buttonRadius: Appearance.rounding.small
+                                    colBackground: "transparent"
+                                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                                    rippleEnabled: false
+                                    contentItem: StyledText {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 8
+                                        anchors.rightMargin: 8
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                        text: modelData.name + (modelData.count !== undefined ? "  (" + modelData.count + ")" : "")
+                                        color: Appearance.colors.colOnLayer1
+                                        font.pixelSize: Appearance.font.pixelSize.small
+                                    }
+                                    onClicked: {
+                                        const parts = root.tagText.trim().split(/\s+/);
+                                        parts[parts.length - 1] = modelData.name;
+                                        root.tagText = parts.join(" ") + " ";
+                                        tagField.text = root.tagText;
+                                        root.suggestionList = [];
+                                        tagField.forceActiveFocus();
+                                    }
                                 }
                             }
                         }
