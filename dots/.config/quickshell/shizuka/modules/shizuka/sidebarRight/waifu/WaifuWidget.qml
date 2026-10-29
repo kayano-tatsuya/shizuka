@@ -34,7 +34,9 @@ Item {
     // Gelbooru hotlink-protects its CDN: QML's Image cannot send a Referer,
     // so pull the preview through curl into the cache (mirrors BooruTile).
     readonly property string imageReferer: root.image?.imageReferer ?? ""
-    readonly property string remoteThumb: root.image?.preview_url ?? root.image?.sample_url ?? ""
+    // Prefer sample_url (medium/full) over preview_url (thumbnail) so the
+    // banner isn't stuck with a 150px thumbnail upscaled to 440px.
+    readonly property string remoteThumb: root.image?.sample_url ?? root.image?.preview_url ?? root.image?.file_url ?? ""
     readonly property bool fetchThumb: root.imageReferer.length > 0 && root.remoteThumb.length > 0
     readonly property string thumbCachePath: {
         if (root.remoteThumb.length === 0) return "";
