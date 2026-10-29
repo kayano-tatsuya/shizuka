@@ -31,6 +31,52 @@ Item {
     readonly property string imageUrl: root.image?.sample_url ?? root.image?.preview_url ?? root.image?.file_url ?? ""
     readonly property string sourceUrl: root.image?.source ?? ""
 
+    // Gelbooru hotlink-protects its CDN: QML's Image cannot send a Referer,
+    // so pull the preview through curl into the cache (mirrors BooruTile).
+    readonly property string imageReferer: root.image?.imageReferer ?? ""
+    readonly property string remoteThumb: root.image?.preview_url ?? root.image?.sample_url ?? ""
+    readonly property bool fetchThumb: root.imageReferer.length > 0 && root.remoteThumb.length > 0
+    readonly property string thumbCachePath: {
+        if (root.remoteThumb.length === 0) return "";
+        const base = decodeURIComponent(root.remoteThumb.substring(root.remoteThumb.lastIndexOf('/') + 1));
+        return base.length > 0 ? `${Directories.booruPreviews}/${base}` : "";
+    }
+    property string localThumbPath: ""
+    property bool thumbFetchStarted: false
+    property bool thumbFetchFailed: false
+
+    function fetchThumbnail() {
+        if (!root.fetchThumb || root.thumbFetchStarted) return;
+        root.thumbFetchStarted = true;
+        const dir = StringUtils.shellSingleQuoteEscape(Directories.booruPreviews);
+        const file = StringUtils.shellSingleQuoteEscape(root.thumbCachePath);
+        const url = StringUtils.shellSingleQuoteEscape(root.remoteThumb);
+        const referer = StringUtils.shellSingleQuoteEscape(root.imageReferer);
+        const ua = Config.options?.networking?.userAgent ?? "";
+        const uaArg = ua ? ` -H 'User-Agent: ${StringUtils.shellSingleQuoteEscape(ua)}'` : "";
+        thumbFetch.command = ["bash", "-c",
+            `mkdir -p '${dir}' && { [ -s '${file}' ] || curl -fsSL --max-time 15 -H 'Referer: ${referer}'${uaArg} '${url}' -o '${file}'; } && [ -s '${file}' ]`];
+        thumbFetch.running = true;
+    }
+    onImageChanged: {
+        root.thumbFetchStarted = false;
+        root.localThumbPath = "";
+        root.thumbFetchFailed = false;
+        root.fetchThumbnail();
+    }
+    onFetchThumbChanged: root.fetchThumbnail()
+
+    Process {
+        id: thumbFetch
+        onExited: (exitCode) => {
+            if (exitCode === 0 && root.thumbCachePath.length > 0) {
+                root.localThumbPath = root.thumbCachePath;
+            } else {
+                root.thumbFetchFailed = true;
+            }
+        }
+    }
+
     // ---- Sizing ----
     // The banner is as tall as the image's aspect ratio needs, so portrait art
     // is not squashed into a fixed strip. The bounds stop an extreme ratio from
@@ -62,7 +108,7 @@ Item {
         if (root.visible)
             Waifu.ensureLoaded();
     }
-    Component.onCompleted: root.ensureImage()
+    Component.onCompleted: { root.fetchThumbnail(); root.ensureImage(); }
     onVisibleChanged: root.ensureImage()
 
     // ---- Placeholder while loading / with nothing to show ----
@@ -73,7 +119,7 @@ Item {
     }
     MaterialSymbol {
         anchors.centerIn: parent
-        visible: root.imageUrl.length === 0
+        visible: root.imageUrl.length === 0 || (root.fetchThumb && root.thumbFetchFailed && root.localThumbPath.length === 0)
         text: Waifu.loading ? "hourglass_top" : "broken_image"
         iconSize: 28
         color: Appearance.colors.colOnLayer2
@@ -90,7 +136,9 @@ Item {
         // (pinning both would make `imageAspect` depend on itself). Alignment
         // only matters when an extreme ratio is clamped above/below.
         verticalAlignment: Image.AlignTop
-        source: root.imageUrl
+        source: root.fetchThumb
+            ? (root.thumbFetchFailed ? root.imageUrl : (root.localThumbPath.length > 0 ? "file://" + root.localThumbPath : ""))
+            : root.imageUrl
         sourceSize.width: Math.max(1, root.width) * 2
         layer.enabled: true
         layer.effect: OpacityMask {
