@@ -128,12 +128,9 @@ Singleton {
         onReleased: { root.superDown = false }
     }
 
-    // Delayed overview toggle on Super release. Quickshell's onReleased fires
-    // even after a combo, so we delay the toggle and cancel it if a combo
-    // event (openlayer/workspace/activewindow) fires in the meantime.
     Timer {
         id: overviewReleaseTimer
-        interval: 80
+        interval: 150
         onTriggered: {
             if (GlobalStates.superReleaseMightTrigger && !GlobalStates.overviewCancelPending) {
                 GlobalStates.overviewOpen = !GlobalStates.overviewOpen;
@@ -160,21 +157,9 @@ Singleton {
         if (GlobalStates.overviewOpen) GlobalStates.overviewOpen = false;
     }
 
-    IpcHandler {
-        target: "background"
-        function toggleCenteredWallpaper(): void {
-            Config.options.background.centeredWallpaper = !Config.options.background.centeredWallpaper
-        }
-    }
-
-     CompositorGlobalShortcut {
-        name: "centeredWallpaperToggle"
-        description: "Toggles centered wallpaper"
-        onPressed: {
-            Config.options.background.centeredWallpaper = !Config.options.background.centeredWallpaper
-        }
-    }
-
+    // Delayed overview toggle on Super release. Quickshell's onReleased fires
+    // even after a combo, so we delay the toggle and cancel it if a combo
+    // event (openlayer/workspace/activewindow) fires in the meantime.
     Connections {
         target: Hyprland
         enabled: WM.compositor === "hyprland"
