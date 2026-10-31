@@ -127,29 +127,6 @@ Singleton {
         onReleased: { root.superDown = false }
     }
 
-    // Hide workspace numbers / cancel the overview-on-release toggle when Super
-    // is used in a combo that opens a panel (e.g. Super+N opens the right
-    // sidebar). Without this, the workspace numbers flash and the overview
-    // toggles on release of every Super+* shortcut.
-    // Cancel the workspace-number overlay (and the overview-on-release
-    // toggle) when Super is used in a combo: a workspace switch or a panel
-    // open while Super is held means it wasn't a bare Super tap.
-    Connections {
-        target: Hyprland
-        enabled: WM.compositor === "hyprland"
-        function onRawEvent(event) {
-            if (!root.superDown) return;
-            // Cancel on any combo that changes state: panel open, workspace
-            // switch, or window focus change (e.g. Super+T launching a terminal).
-            if (event.name === "openlayer" || event.name === "workspace" || event.name === "workspacev2"
-                    || event.name === "activewindow" || event.name === "activewindowv2") {
-                root.superDown = false;
-                root.superReleaseMightTrigger = false;
-                if (root.overviewOpen) root.overviewOpen = false;
-            }
-        }
-    }
-
     IpcHandler {
         target: "background"
         function toggleCenteredWallpaper(): void {
