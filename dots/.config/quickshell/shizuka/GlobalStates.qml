@@ -139,7 +139,10 @@ Singleton {
         enabled: WM.compositor === "hyprland"
         function onRawEvent(event) {
             if (!root.superDown) return;
-            if (event.name === "openlayer" || event.name === "workspace" || event.name === "workspacev2") {
+            // Cancel on any combo that changes state: panel open, workspace
+            // switch, or window focus change (e.g. Super+T launching a terminal).
+            if (event.name === "openlayer" || event.name === "workspace" || event.name === "workspacev2"
+                    || event.name === "activewindow" || event.name === "activewindowv2") {
                 root.superDown = false;
                 root.superReleaseMightTrigger = false;
                 if (root.overviewOpen) root.overviewOpen = false;
