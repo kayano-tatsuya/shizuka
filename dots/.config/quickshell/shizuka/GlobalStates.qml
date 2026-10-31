@@ -133,7 +133,7 @@ Singleton {
     // event (openlayer/workspace/activewindow) fires in the meantime.
     Timer {
         id: overviewReleaseTimer
-        interval: 200
+        interval: 80
         onTriggered: {
             if (GlobalStates.superReleaseMightTrigger && !GlobalStates.overviewCancelPending) {
                 GlobalStates.overviewOpen = !GlobalStates.overviewOpen;
@@ -179,6 +179,9 @@ Singleton {
         target: Hyprland
         enabled: WM.compositor === "hyprland"
         function onRawEvent(event) {
+            // Ignore the overview's own openlayer event.
+            if (event.name === "openlayer" && (event.data || "").includes("overview"))
+                return;
             if (event.name === "openlayer" || event.name === "workspace" || event.name === "workspacev2"
                     || event.name === "activewindow" || event.name === "activewindowv2") {
                 GlobalStates.cancelOverviewToggle();
