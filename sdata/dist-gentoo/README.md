@@ -28,10 +28,10 @@ The dependency installer:
 2. Enables the GURU and hyproverlay repositories when necessary.
 3. Copies [`overlay/`](overlay/) to `/var/db/repos/ii-dots` and installs its
    repository configuration.
-4. Generates `/etc/portage/package.accept_keywords/illogical-impulse` for the
+4. Generates `/etc/portage/package.accept_keywords/shizuka` for the
    current architecture from [`keywords`](keywords).
 5. Installs [`useflags`](useflags) and [`additional-useflags`](additional-useflags)
-   as `/etc/portage/package.use/illogical-impulse`.
+   as `/etc/portage/package.use/shizuka`.
 6. Syncs configured repositories, updates `@world`, and rebuilds
    installed live packages.
 7. Emerges every metapackage listed in [`metapkgs.sh`](metapkgs.sh).

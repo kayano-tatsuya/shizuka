@@ -35,10 +35,10 @@ v sudo cp "./sdata/dist-gentoo/ii-dots.conf" "/etc/portage/repos.conf/ii-dots.co
 arch=$(portageq envvar ACCEPT_KEYWORDS)
 
 v sh -c "sed 's/$/ ~${arch}/' ./sdata/dist-gentoo/keywords |
-    sudo tee /etc/portage/package.accept_keywords/illogical-impulse >/dev/null"
+    sudo tee /etc/portage/package.accept_keywords/shizuka >/dev/null"
 
-v sudo cp "./sdata/dist-gentoo/useflags" "/etc/portage/package.use/illogical-impulse"
-v sudo sh -c 'cat ./sdata/dist-gentoo/additional-useflags >> /etc/portage/package.use/illogical-impulse'
+v sudo cp "./sdata/dist-gentoo/useflags" "/etc/portage/package.use/shizuka"
+v sudo sh -c 'cat ./sdata/dist-gentoo/additional-useflags >> /etc/portage/package.use/shizuka'
 
 v sudo emerge --sync
 v sudo emerge --quiet --newuse --update --deep @world

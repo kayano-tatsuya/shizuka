@@ -1,16 +1,16 @@
 metapkgs=(
-    media-sound/illogical-impulse-audio
-    app-misc/illogical-impulse-backlight
-    app-misc/illogical-impulse-basic
-    x11-themes/illogical-impulse-bibata-modern-classic-bin
-    x11-themes/illogical-impulse-fonts-themes
-    gui-wm/illogical-impulse-hyprland
-    kde-misc/illogical-impulse-kde
-    app-text/illogical-impulse-microtex-git
-    sys-apps/illogical-impulse-portal
-    app-misc/illogical-impulse-python
-    gui-apps/illogical-impulse-quickshell-git
-    gui-apps/illogical-impulse-screencapture
-    app-misc/illogical-impulse-toolkit
-    gui-apps/illogical-impulse-widgets
+    media-sound/shizuka-audio
+    app-misc/shizuka-backlight
+    app-misc/shizuka-basic
+    x11-themes/shizuka-bibata-modern-classic-bin
+    x11-themes/shizuka-fonts-themes
+    gui-wm/shizuka-hyprland
+    kde-misc/shizuka-kde
+    app-text/shizuka-microtex-git
+    sys-apps/shizuka-portal
+    app-misc/shizuka-python
+    gui-apps/shizuka-quickshell-git
+    gui-apps/shizuka-screencapture
+    app-misc/shizuka-toolkit
+    gui-apps/shizuka-widgets
 )
