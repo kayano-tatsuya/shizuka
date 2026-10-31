@@ -131,14 +131,17 @@ Singleton {
     // is used in a combo that opens a panel (e.g. Super+N opens the right
     // sidebar). Without this, the workspace numbers flash and the overview
     // toggles on release of every Super+* shortcut.
+    // Cancel the workspace-number overlay (and the overview-on-release
+    // toggle) when Super is used in a combo: a workspace switch or a panel
+    // open while Super is held means it wasn't a bare Super tap.
     Connections {
         target: Hyprland
         enabled: WM.compositor === "hyprland"
         function onRawEvent(event) {
-            if (root.superDown && event.name === "openlayer") {
+            if (!root.superDown) return;
+            if (event.name === "openlayer" || event.name === "workspace" || event.name === "workspacev2") {
                 root.superDown = false;
                 root.superReleaseMightTrigger = false;
-                // Undo the overview that searchToggle may have opened on press.
                 if (root.overviewOpen) root.overviewOpen = false;
             }
         }
