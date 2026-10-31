@@ -229,11 +229,7 @@ Scope {
         }
 
         onReleased: {
-            if (!GlobalStates.superReleaseMightTrigger) {
-                GlobalStates.superReleaseMightTrigger = true;
-                return;
-            }
-            GlobalStates.overviewOpen = !GlobalStates.overviewOpen;
+            GlobalStates.scheduleOverviewToggle();
         }
     }
     CompositorGlobalShortcut {
