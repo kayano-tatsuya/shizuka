@@ -133,7 +133,7 @@ Singleton {
     // event (openlayer/workspace/activewindow) fires in the meantime.
     Timer {
         id: overviewReleaseTimer
-        interval: 80
+        interval: 200
         onTriggered: {
             if (GlobalStates.superReleaseMightTrigger && !GlobalStates.overviewCancelPending) {
                 GlobalStates.overviewOpen = !GlobalStates.overviewOpen;
