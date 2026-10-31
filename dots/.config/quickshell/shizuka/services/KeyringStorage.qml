@@ -25,7 +25,7 @@ Singleton {
     }
     
     property var properties: {
-        "application": "illogical-impulse",
+        "application": "shizuka",
         "explanation": Translation.tr("For storing API keys and other sensitive information"),
     }
     property var propertiesAsArgs: Object.keys(root.properties).reduce(

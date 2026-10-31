@@ -46,7 +46,7 @@ payload=$(jq -n \
 # echo "$payload" | jq
 
 # Get API key
-API_KEY=$(secret-tool lookup 'application' 'illogical-impulse' | jq -r '.apiKeys.gemini')
+API_KEY=$( (secret-tool lookup 'application' 'shizuka' || secret-tool lookup 'application' 'illogical-impulse') | jq -r '.apiKeys.gemini')
 
 # Notify start
 notify-send "Translation started" "Will take 2 minutes, and you'll be notified when it's done, so feel free to do something else in the meantime." -a "$NOTIFICATION_APP_NAME"
