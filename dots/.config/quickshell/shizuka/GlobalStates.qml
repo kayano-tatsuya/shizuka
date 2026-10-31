@@ -127,15 +127,19 @@ Singleton {
         onReleased: { root.superDown = false }
     }
 
-    // Hide workspace numbers when Super is used in a combo that opens a panel
-    // (e.g. Super+N opens the right sidebar). Without this, the numbers flash
-    // on every Super+* shortcut.
+    // Hide workspace numbers / cancel the overview-on-release toggle when Super
+    // is used in a combo that opens a panel (e.g. Super+N opens the right
+    // sidebar). Without this, the workspace numbers flash and the overview
+    // toggles on release of every Super+* shortcut.
     Connections {
         target: Hyprland
         enabled: WM.compositor === "hyprland"
         function onRawEvent(event) {
             if (root.superDown && event.name === "openlayer") {
                 root.superDown = false;
+                root.superReleaseMightTrigger = false;
+                // Undo the overview that searchToggle may have opened on press.
+                if (root.overviewOpen) root.overviewOpen = false;
             }
         }
     }
