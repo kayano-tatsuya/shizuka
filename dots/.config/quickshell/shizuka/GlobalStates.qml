@@ -32,7 +32,6 @@ Singleton {
     property bool sessionOpen: false
     property bool superDown: false
     property bool superReleaseMightTrigger: true
-    property bool overviewCancelPending: false
     property bool wallpaperSelectorOpen: false
     property bool workspaceShowNumbers: false
     property string settingsPage: ""
@@ -128,49 +127,18 @@ Singleton {
         onReleased: { root.superDown = false }
     }
 
-    Timer {
-        id: overviewReleaseTimer
-        interval: 150
-        onTriggered: {
-            if (GlobalStates.superReleaseMightTrigger && !GlobalStates.overviewCancelPending) {
-                GlobalStates.overviewOpen = !GlobalStates.overviewOpen;
-            }
-            GlobalStates.overviewCancelPending = false;
-            GlobalStates.superReleaseMightTrigger = true;
+    IpcHandler {
+        target: "background"
+        function toggleCenteredWallpaper(): void {
+            Config.options.background.centeredWallpaper = !Config.options.background.centeredWallpaper
         }
     }
 
-    function scheduleOverviewToggle() {
-        if (!GlobalStates.superReleaseMightTrigger) {
-            GlobalStates.overviewCancelPending = false;
-            GlobalStates.superReleaseMightTrigger = true;
-            return;
-        }
-        GlobalStates.overviewCancelPending = false;
-        overviewReleaseTimer.restart();
-    }
-
-    function cancelOverviewToggle() {
-        overviewReleaseTimer.stop();
-        GlobalStates.overviewCancelPending = true;
-        GlobalStates.superReleaseMightTrigger = false;
-        if (GlobalStates.overviewOpen) GlobalStates.overviewOpen = false;
-    }
-
-    // Delayed overview toggle on Super release. Quickshell's onReleased fires
-    // even after a combo, so we delay the toggle and cancel it if a combo
-    // event (openlayer/workspace/activewindow) fires in the meantime.
-    Connections {
-        target: Hyprland
-        enabled: WM.compositor === "hyprland"
-        function onRawEvent(event) {
-            // Ignore the overview's own openlayer event.
-            if (event.name === "openlayer" && (event.data || "").includes("overview"))
-                return;
-            if (event.name === "openlayer" || event.name === "workspace" || event.name === "workspacev2"
-                    || event.name === "activewindow" || event.name === "activewindowv2") {
-                GlobalStates.cancelOverviewToggle();
-            }
+     CompositorGlobalShortcut {
+        name: "centeredWallpaperToggle"
+        description: "Toggles centered wallpaper"
+        onPressed: {
+            Config.options.background.centeredWallpaper = !Config.options.background.centeredWallpaper
         }
     }
 }
