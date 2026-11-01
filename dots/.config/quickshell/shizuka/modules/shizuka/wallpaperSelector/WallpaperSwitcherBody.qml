@@ -498,8 +498,8 @@ Item {
 
                 Popup {
                     id: sortPopup
-                    x: sortBtn.x
-                    y: sortBtn.y - height - 4
+                    x: sortBtn.x + sortBtn.width - width
+                    y: sortBtn.y + sortBtn.height + 4
                     width: 230
                     padding: 8
                     background: Rectangle {
