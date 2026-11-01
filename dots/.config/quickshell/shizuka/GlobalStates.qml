@@ -32,7 +32,6 @@ Singleton {
     property bool sessionOpen: false
     property bool superDown: false
     property bool superReleaseMightTrigger: true
-    property bool overviewCancelPending: false
     property bool wallpaperSelectorOpen: false
     property bool workspaceShowNumbers: false
     property string settingsPage: ""
@@ -128,31 +127,7 @@ Singleton {
         onReleased: { root.superDown = false }
     }
 
-    Timer {
-        id: overviewReleaseTimer
-        interval: 200
-        onTriggered: {
-            if (GlobalStates.superReleaseMightTrigger && !GlobalStates.overviewCancelPending) {
-                GlobalStates.overviewOpen = !GlobalStates.overviewOpen;
-            }
-            GlobalStates.overviewCancelPending = false;
-            GlobalStates.superReleaseMightTrigger = true;
-        }
-    }
-
-    function scheduleOverviewToggle() {
-        if (!GlobalStates.superReleaseMightTrigger) {
-            GlobalStates.overviewCancelPending = false;
-            GlobalStates.superReleaseMightTrigger = true;
-            return;
-        }
-        GlobalStates.overviewCancelPending = false;
-        overviewReleaseTimer.restart();
-    }
-
     function cancelOverviewToggle() {
-        overviewReleaseTimer.stop();
-        GlobalStates.overviewCancelPending = true;
         GlobalStates.superReleaseMightTrigger = false;
         if (GlobalStates.overviewOpen) GlobalStates.overviewOpen = false;
     }
