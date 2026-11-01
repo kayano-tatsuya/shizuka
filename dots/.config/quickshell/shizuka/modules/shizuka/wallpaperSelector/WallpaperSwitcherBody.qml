@@ -484,7 +484,7 @@ Item {
                     implicitHeight: 38
                     buttonRadius: 19
                     colBackground: Appearance.colors.colSecondaryContainer
-                    onClicked: sortPopup.visible = !sortPopup.visible
+                    onClicked: sortPopup.popup(sortBtn, 0, sortBtn.height)
                     contentItem: MaterialSymbol {
                         anchors.centerIn: parent
                         text: "sort"
@@ -496,62 +496,55 @@ Item {
                     }
                 }
 
-                Popup {
+                Menu {
                     id: sortPopup
-                    x: sortBtn.x + sortBtn.width - width
-                    y: sortBtn.y + sortBtn.height + 4
                     width: 230
-                    padding: 8
+
                     background: Rectangle {
                         color: Appearance.m3colors.m3surfaceContainer
                         radius: Appearance.rounding.normal
                         border.width: 1
                         border.color: Appearance.colors.colLayer0Border
                     }
-                    ColumnLayout {
-                        anchors.fill: parent
-                        spacing: 2
-                        Repeater {
-                            model: [
-                                { id: "custom",   name: Translation.tr("Custom (manual order)"), icon: "dashboard_customize" },
-                                { id: "time",     name: Translation.tr("Date added (newest first)"), icon: "schedule" },
-                                { id: "time_rev", name: Translation.tr("Date added (oldest first)"), icon: "history" },
-                                { id: "name",     name: Translation.tr("Name (A to Z)"), icon: "sort_by_alpha" },
-                                { id: "name_rev", name: Translation.tr("Name (Z to A)"), icon: "sort_by_alpha" },
-                                { id: "size",     name: Translation.tr("Size (largest first)"), icon: "straighten" },
-                                { id: "size_rev", name: Translation.tr("Size (smallest first)"), icon: "straighten" },
-                            ]
-                            delegate: RippleButton {
-                                required property var modelData
-                                Layout.fillWidth: true
-                                implicitHeight: 32
-                                buttonRadius: Appearance.rounding.small
-                                toggled: Wallpapers.sortMode === modelData.id
-                                colBackgroundToggled: Appearance.colors.colSecondaryContainer
-                                colBackgroundToggledHover: Appearance.colors.colSecondaryContainerHover
-                                colRippleToggled: Appearance.colors.colSecondaryContainerActive
-                                onClicked: {
-                                    Wallpapers.setSortMode(modelData.id);
-                                    sortPopup.visible = false;
+
+                    Repeater {
+                        model: [
+                            { id: "custom",   name: Translation.tr("Custom (manual order)"), icon: "dashboard_customize" },
+                            { id: "time",     name: Translation.tr("Date added (newest first)"), icon: "schedule" },
+                            { id: "time_rev", name: Translation.tr("Date added (oldest first)"), icon: "history" },
+                            { id: "name",     name: Translation.tr("Name (A to Z)"), icon: "sort_by_alpha" },
+                            { id: "name_rev", name: Translation.tr("Name (Z to A)"), icon: "sort_by_alpha" },
+                            { id: "size",     name: Translation.tr("Size (largest first)"), icon: "straighten" },
+                            { id: "size_rev", name: Translation.tr("Size (smallest first)"), icon: "straighten" },
+                        ]
+                        delegate: MenuItem {
+                            required property var modelData
+                            implicitHeight: 32
+                            background: Rectangle {
+                                color: Wallpapers.sortMode === modelData.id
+                                    ? Appearance.colors.colSecondaryContainer
+                                    : (parent.hovered ? Appearance.colors.colLayer1Hover : "transparent")
+                                radius: Appearance.rounding.small
+                            }
+                            contentItem: RowLayout {
+                                spacing: 8
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 10
+                                MaterialSymbol {
+                                    text: modelData.icon
+                                    iconSize: Appearance.font.pixelSize.normal
+                                    color: Wallpapers.sortMode === modelData.id
+                                        ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer1
                                 }
-                                contentItem: RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 10
-                                    anchors.rightMargin: 10
-                                    spacing: 8
-                                    MaterialSymbol {
-                                        text: modelData.icon
-                                        iconSize: Appearance.font.pixelSize.normal
-                                        color: toggled ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer1
-                                    }
-                                    StyledText {
-                                        Layout.fillWidth: true
-                                        text: modelData.name
-                                        font.pixelSize: Appearance.font.pixelSize.small
-                                        color: toggled ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer1
-                                    }
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    text: modelData.name
+                                    font.pixelSize: Appearance.font.pixelSize.small
+                                    color: Wallpapers.sortMode === modelData.id
+                                        ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer1
                                 }
                             }
+                            onTriggered: Wallpapers.setSortMode(modelData.id)
                         }
                     }
                 }
