@@ -11,7 +11,7 @@ Singleton {
     id: root
 
     property alias inhibit: idleInhibitor.enabled
-    inhibit: false
+    inhibit: true
 
     Connections {
         target: Persistent
@@ -32,19 +32,15 @@ Singleton {
     IdleInhibitor {
         id: idleInhibitor
         window: PanelWindow {
-            // Inhibitor requires a "visible" surface
-            // Actually not lol
-            implicitWidth: 0
-            implicitHeight: 0
+            // Hyprland 0.57.0 needs a real (non-zero) surface for the idle
+            // inhibitor to register; a 0x0 surface with an empty input region
+            // is ignored, so the "keep awake" toggle did nothing.
+            implicitWidth: 1
+            implicitHeight: 1
             color: "transparent"
-            // Just in case...
             anchors {
                 right: true
                 bottom: true
-            }
-            // Make it not interactable
-            mask: Region {
-                item: null
             }
         }
     }
