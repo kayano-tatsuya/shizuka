@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 
 import qs.modules.common
 import qs.modules.common.functions
+import qs.services
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -48,6 +49,15 @@ Singleton {
     property var _pendingAspect: ({})
     property bool _thumbPending: false
     property bool _started: false
+
+    // Re-fetch when the shared sort mode changes so the switcher reflects it.
+    Connections {
+        target: Wallpapers
+        function onSortModeChanged() {
+            root._lastWallpapersJson = "";
+            root.refresh();
+        }
+    }
 
     // "<monitor>::<wsId>" -> path, persisted.
     property var workspaceMap: ({})
@@ -123,7 +133,7 @@ Singleton {
     }
 
     property Process fetchProc: Process {
-        command: ["bash", root.listScript]
+        command: ["bash", "-c", `WALLPAPER_SORT='${Wallpapers.sortMode || "name"}' bash '${root.listScript}'`]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
