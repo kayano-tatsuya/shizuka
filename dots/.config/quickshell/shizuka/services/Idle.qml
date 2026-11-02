@@ -20,6 +20,8 @@ Singleton {
     Connections {
         target: Persistent
         function onReadyChanged() {
+            if (!Persistent.ready)
+                return;
             if (!Persistent.isNewHyprlandInstance) {
                 root.inhibit = Persistent.states.idle.inhibit;
             } else {
@@ -47,20 +49,12 @@ Singleton {
         }
     }
 
-    // Apply persisted state. Persistent may already be ready when this
-    // singleton is first instantiated, so handle both cases.
-    function applyPersisted() {
-        if (Persistent.ready) {
-            root.inhibit = Persistent.states.idle.inhibit;
-            root.applyInhibit();
-        }
-    }
-    Component.onCompleted: {
-        root.applyPersisted();
-    }
-    Connections {
-        target: Persistent
-        function onReadyChanged() {
+    // Apply persisted state after hypridle has had time to start (execs.lua).
+    Timer {
+        interval: 3000
+        running: true
+        repeat: false
+        onTriggered: {
             if (Persistent.ready) {
                 root.inhibit = Persistent.states.idle.inhibit;
                 root.applyInhibit();
@@ -68,13 +62,11 @@ Singleton {
         }
     }
 
-    // Give hypridle time to start (execs.lua) before killing it.
-    Timer {
-        interval: 3000
-        running: true
-        repeat: false
-        onTriggered: {
-            if (root.inhibit) root.applyInhibit();
+    Component.onCompleted: {
+        // If Persistent is already ready, apply immediately.
+        if (Persistent.ready) {
+            root.inhibit = Persistent.states.idle.inhibit;
+            root.applyInhibit();
         }
     }
 
