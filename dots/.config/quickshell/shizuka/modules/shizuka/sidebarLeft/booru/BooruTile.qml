@@ -37,7 +37,7 @@ Rectangle {
     readonly property real aspectRatio: (imageData && imageData.width > 0 && imageData.height > 0)
         ? imageData.height / imageData.width : 1.0
 
-    readonly property string effectiveUrl: imageData?.file_url ?? imageData?.sample_url ?? ""
+    readonly property string effectiveUrl: imageData?.file_url || imageData?.sample_url || ""
 
     // Some hosts (Gelbooru) hotlink-protect their image CDN: without a matching
     // Referer the request 302s to an HTML page instead of the image, and QML's
@@ -45,7 +45,7 @@ Rectangle {
     // referer we therefore pull the thumbnail through curl into the preview
     // cache and display the local copy. Empty referer = load it directly.
     readonly property string imageReferer: root.imageData?.imageReferer ?? ""
-    readonly property string remoteThumb: root.imageData?.preview_url ?? root.imageData?.sample_url ?? ""
+    readonly property string remoteThumb: root.imageData?.preview_url || root.imageData?.sample_url || ""
     readonly property var remoteThumbFallbacks: {
         const list = [];
         if (root.imageData?.sample_url) list.push(root.imageData.sample_url);

@@ -54,15 +54,15 @@ Rectangle {
         if (w > 0 && h > 0) return h / w;
         return 0.62;
     }
-    readonly property string fullUrl: image?.file_url ?? image?.sample_url ?? ""
-    readonly property string displayUrl: image?.sample_url ?? image?.file_url ?? image?.preview_url ?? ""
+    readonly property string fullUrl: image?.file_url || image?.sample_url || ""
+    readonly property string displayUrl: image?.sample_url || image?.file_url || image?.preview_url || ""
     readonly property string sourceUrl: image?.source ?? ""
     // Gelbooru hotlink-protects its image CDN: downloads need a Referer.
     readonly property string imageReferer: image?.imageReferer ?? ""
+    readonly property string remoteThumb: root.image?.preview_url || root.image?.sample_url || ""
     // Referer-protected hosts (Gelbooru) hotlink-protect their CDN: QML's
     // Image cannot send a Referer header, so pull the preview through curl
     // into the cache and display the local copy (mirrors BooruTile).
-    readonly property string remoteThumb: root.image?.preview_url ?? root.image?.sample_url ?? ""
     readonly property var remoteThumbFallbacks: {
         const list = [];
         if (root.image?.sample_url) list.push(root.image.sample_url);

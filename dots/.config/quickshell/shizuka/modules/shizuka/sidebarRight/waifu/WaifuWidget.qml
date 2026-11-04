@@ -28,7 +28,7 @@ Item {
     // Prefer the (smaller, faster) sample/preview URLs: the full-res file_url
     // (especially yande.re's) is multi-MB and QML's async Image loader can
     // stall/fail on it, leaving the banner blank ("infinitely loading").
-    readonly property string imageUrl: root.image?.sample_url ?? root.image?.preview_url ?? root.image?.file_url ?? ""
+    readonly property string imageUrl: root.image?.sample_url || root.image?.preview_url || root.image?.file_url || ""
     readonly property string sourceUrl: root.image?.source ?? ""
 
     // Gelbooru hotlink-protects its CDN: QML's Image cannot send a Referer,
@@ -36,7 +36,7 @@ Item {
     readonly property string imageReferer: root.image?.imageReferer ?? ""
     // Prefer sample_url (medium/full) over preview_url (thumbnail) so the
     // banner isn't stuck with a 150px thumbnail upscaled to 440px.
-    readonly property string remoteThumb: root.image?.sample_url ?? root.image?.preview_url ?? root.image?.file_url ?? ""
+    readonly property string remoteThumb: root.image?.sample_url || root.image?.preview_url || root.image?.file_url || ""
     readonly property bool fetchThumb: root.imageReferer.length > 0 && root.remoteThumb.length > 0
     readonly property string thumbCachePath: {
         if (root.remoteThumb.length === 0) return "";
