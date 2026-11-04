@@ -61,6 +61,7 @@ Singleton {
         if (!image) return;
         root.current = image;
         root._persist(image);
+        Booru.downloadHighQuality(image);
     }
 
     function clearWaifu() {

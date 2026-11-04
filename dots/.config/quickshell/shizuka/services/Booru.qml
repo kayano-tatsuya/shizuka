@@ -352,6 +352,23 @@ Singleton {
         responses = []
     }
 
+    function downloadHighQuality(image) {
+        if (!image) return;
+        const url = image.file_url ?? image.sample_url ?? image.preview_url ?? "";
+        if (!url || url.length === 0) return;
+        const base = decodeURIComponent(url.substring(url.lastIndexOf('/') + 1));
+        if (base.length === 0) return;
+        const dir = StringUtils.shellSingleQuoteEscape(Directories.booruCache);
+        const file = StringUtils.shellSingleQuoteEscape(`${Directories.booruCache}/${base}`);
+        const u = StringUtils.shellSingleQuoteEscape(url);
+        const referer = image.imageReferer ?? "";
+        const refererArg = referer ? ` -H 'Referer: ${StringUtils.shellSingleQuoteEscape(referer)}'` : "";
+        const ua = Config.options?.networking?.userAgent ?? "";
+        const uaArg = ua ? ` -H 'User-Agent: ${StringUtils.shellSingleQuoteEscape(ua)}'` : "";
+        Quickshell.execDetached(["bash", "-c",
+            `mkdir -p '${dir}' && { [ -s '${file}' ] || curl -fsSL --max-time 60${uaArg}${refererArg} '${u}' -o '${file}'; }`]);
+    }
+
     function addSystemMessage(message) {
         responses = [...responses, root.booruResponseDataComponent.createObject(null, {
             "provider": "system",

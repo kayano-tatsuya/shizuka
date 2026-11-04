@@ -27,7 +27,10 @@ Singleton {
     property string coverArt: FileUtils.trimFileProtocol(`${Directories.cache}/media/coverart`)
     property string tempImages: "/tmp/quickshell/media/images"
     property string booruPreviews: FileUtils.trimFileProtocol(`${Directories.cache}/media/boorus`)
-    // pixiv's CDN needs a Referer to serve an image, and quickshell's Image
+    // Persistent (not wiped on shell reload) cache for high-quality images of
+    // bookmarked images and the sidebar waifu. Unlike booruPreviews, this is
+    // never rm -rf'd on startup.
+    property string booruCache: FileUtils.trimFileProtocol(`${Directories.cache}/media/booru-cache`)    // pixiv's CDN needs a Referer to serve an image, and quickshell's Image
     // cannot send one, so these thumbnails are fetched to disk first.
     property string pixivPreviews: FileUtils.trimFileProtocol(`${Directories.cache}/media/pixiv`)
     property string booruDownloads: FileUtils.trimFileProtocol(Directories.pictures  + "/homework")

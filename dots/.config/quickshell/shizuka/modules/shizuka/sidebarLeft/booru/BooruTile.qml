@@ -61,8 +61,9 @@ Rectangle {
     }
     property string localThumbPath: ""
     property bool thumbFetchStarted: false
+    property bool thumbFetchFailed: false
 
-    function fetchThumbnail() {
+    function fetchThumbnail(force = false) {
         if (!root.fetchThumb || root.gated || root.thumbFetchStarted) return;
         root.thumbFetchStarted = true;
         const dir = StringUtils.shellSingleQuoteEscape(Directories.booruPreviews);
@@ -71,23 +72,35 @@ Rectangle {
         const referer = StringUtils.shellSingleQuoteEscape(root.imageReferer);
         const ua = Config.options?.networking?.userAgent ?? "";
         const uaArg = ua ? ` -H 'User-Agent: ${StringUtils.shellSingleQuoteEscape(ua)}'` : "";
+        const rmPrefix = force ? `rm -f '${file}'; ` : "";
         // `[ -s file ] ||` reuses an already-cached preview; the trailing
         // `[ -s file ]` rejects partial/empty downloads so a failed fetch never
         // looks like a successful one.
         thumbFetch.command = ["bash", "-c",
-            `mkdir -p '${dir}' && { [ -s '${file}' ] || curl -fsSL --max-time 15 -H 'Referer: ${referer}'${uaArg} '${url}' -o '${file}'; } && [ -s '${file}' ]`]
+            `${rmPrefix}mkdir -p '${dir}' && { [ -s '${file}' ] || curl -fsSL --max-time 15 -H 'Referer: ${referer}'${uaArg} '${url}' -o '${file}'; } && [ -s '${file}' ] || { rm -f '${file}'; exit 1; }`]
         thumbFetch.running = true;
     }
 
-    onImageDataChanged: root.fetchThumbnail()
+    onImageDataChanged: {
+        const wasFailed = root.thumbFetchFailed;
+        root.thumbFetchStarted = false;
+        root.thumbFetchFailed = false;
+        root.localThumbPath = "";
+        root.fetchThumbnail(wasFailed);
+    }
     onGatedChanged: if (!root.gated) root.fetchThumbnail()
     Component.onCompleted: root.fetchThumbnail()
 
     Process {
         id: thumbFetch
         onExited: (exitCode) => {
-            if (exitCode === 0 && root.thumbCachePath.length > 0)
+            if (exitCode === 0 && root.thumbCachePath.length > 0) {
                 root.localThumbPath = root.thumbCachePath;
+                root.thumbFetchFailed = false;
+            } else {
+                root.thumbFetchFailed = true;
+                root.thumbFetchStarted = false;
+            }
         }
     }
 
@@ -120,8 +133,10 @@ Rectangle {
         id: thumb
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
-        source: root.fetchThumb ? root.localThumbPath : root.remoteThumb
-        fallbacks: root.fetchThumb ? [] : root.remoteThumbFallbacks
+        source: root.fetchThumb
+            ? (root.thumbFetchFailed || root.localThumbPath.length === 0 ? root.remoteThumb : root.localThumbPath)
+            : root.remoteThumb
+        fallbacks: root.fetchThumb ? (root.thumbFetchFailed ? root.remoteThumbFallbacks : []) : root.remoteThumbFallbacks
     }
 
     // NSFW gate: opaque cover, no decoding of the real image is relied upon.

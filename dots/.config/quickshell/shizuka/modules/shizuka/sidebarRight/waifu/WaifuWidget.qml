@@ -47,7 +47,7 @@ Item {
     property bool thumbFetchStarted: false
     property bool thumbFetchFailed: false
 
-    function fetchThumbnail() {
+    function fetchThumbnail(force = false) {
         if (!root.fetchThumb || root.thumbFetchStarted) return;
         root.thumbFetchStarted = true;
         const dir = StringUtils.shellSingleQuoteEscape(Directories.booruPreviews);
@@ -56,15 +56,17 @@ Item {
         const referer = StringUtils.shellSingleQuoteEscape(root.imageReferer);
         const ua = Config.options?.networking?.userAgent ?? "";
         const uaArg = ua ? ` -H 'User-Agent: ${StringUtils.shellSingleQuoteEscape(ua)}'` : "";
+        const rmPrefix = force ? `rm -f '${file}'; ` : "";
         thumbFetch.command = ["bash", "-c",
-            `mkdir -p '${dir}' && { [ -s '${file}' ] || curl -fsSL --max-time 15 -H 'Referer: ${referer}'${uaArg} '${url}' -o '${file}'; } && [ -s '${file}' ]`];
+            `${rmPrefix}mkdir -p '${dir}' && { [ -s '${file}' ] || curl -fsSL --max-time 15 -H 'Referer: ${referer}'${uaArg} '${url}' -o '${file}'; } && [ -s '${file}' ] || { rm -f '${file}'; exit 1; }`];
         thumbFetch.running = true;
     }
     onImageChanged: {
+        const wasFailed = root.thumbFetchFailed;
         root.thumbFetchStarted = false;
         root.localThumbPath = "";
         root.thumbFetchFailed = false;
-        root.fetchThumbnail();
+        root.fetchThumbnail(wasFailed);
     }
     onFetchThumbChanged: root.fetchThumbnail()
 
@@ -73,8 +75,10 @@ Item {
         onExited: (exitCode) => {
             if (exitCode === 0 && root.thumbCachePath.length > 0) {
                 root.localThumbPath = root.thumbCachePath;
+                root.thumbFetchFailed = false;
             } else {
                 root.thumbFetchFailed = true;
+                root.thumbFetchStarted = false;
             }
         }
     }

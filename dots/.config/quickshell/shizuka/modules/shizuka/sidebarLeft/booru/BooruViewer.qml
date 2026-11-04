@@ -86,6 +86,7 @@ Item {
             next.splice(existing, 1);
         } else {
             next.unshift(Object.assign({}, image, { provider: root.provider }));
+            Booru.downloadHighQuality(image);
         }
         Persistent.states.booru.bookmarks = next;
     }
