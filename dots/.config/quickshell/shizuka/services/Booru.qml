@@ -40,10 +40,10 @@ Singleton {
                         "is_nsfw": (item.rating != 's'),
                         "md5": item.md5,
                         "preview_url": item.preview_url,
-                        "sample_url": item.sample_url ?? item.file_url,
+                        "sample_url": item.sample_url || item.file_url,
                         "file_url": item.file_url,
                         "file_ext": item.file_ext,
-                        "source": getWorkingImageSource(item.source) ?? item.file_url,
+                        "source": getWorkingImageSource(item.source) || item.file_url,
                     }
                 })
             },
@@ -74,10 +74,10 @@ Singleton {
                         "is_nsfw": (item.rating != 's'),
                         "md5": item.md5,
                         "preview_url": item.preview_url,
-                        "sample_url": item.sample_url ?? item.file_url,
+                        "sample_url": item.sample_url || item.file_url,
                         "file_url": item.file_url,
                         "file_ext": item.file_ext,
-                        "source": getWorkingImageSource(item.source) ?? item.file_url,
+                        "source": getWorkingImageSource(item.source) || item.file_url,
                     }
                 })
             },
@@ -138,7 +138,7 @@ Singleton {
                         "sample_url": item.file_url ?? item.large_file_url,
                         "file_url": item.large_file_url,
                         "file_ext": item.file_ext,
-                        "source": getWorkingImageSource(item.source) ?? item.file_url,
+                        "source": getWorkingImageSource(item.source) || item.file_url,
                     }
                 })
             },
@@ -178,11 +178,11 @@ Singleton {
                         "is_nsfw": ratingCode !== "s",
                         "md5": item.md5,
                         "preview_url": item.preview_url,
-                        "sample_url": item.sample_url ?? item.file_url,
+                        "sample_url": item.sample_url || item.file_url,
                         "file_url": item.file_url,
                         // Gelbooru's JSON has no file_ext field
                         "file_ext": item.file_ext ?? String(item.file_url ?? "").split('.').pop(),
-                        "source": getWorkingImageSource(item.source) ?? item.file_url,
+                        "source": getWorkingImageSource(item.source) || item.file_url,
                     }
                 })
             },
@@ -216,7 +216,7 @@ Singleton {
                         "sample_url": item.file_url ?? item.large_file_url,
                         "file_url": item.large_file_url,
                         "file_ext": item.file_ext,
-                        "source": getWorkingImageSource(item.source) ?? item.file_url,
+                        "source": getWorkingImageSource(item.source) || item.file_url,
                     }
                 })
             },
@@ -247,11 +247,11 @@ Singleton {
                         "rating": item.isNsfw ? "e" : "s",
                         "is_nsfw": item.isNsfw,
                         "md5": item.md5,
-                        "preview_url": item.sample_url ?? item.url, // preview_url just says access denied (maybe i fucked up and sent too many requests idk)
+                        "preview_url": item.sample_url || item.url, // preview_url just says access denied (maybe i fucked up and sent too many requests idk)
                         "sample_url": item.url,
                         "file_url": item.url,
                         "file_ext": item.extension,
-                        "source": getWorkingImageSource(item.source) ?? item.url,
+                        "source": getWorkingImageSource(item.source) || item.url,
                     }
                 })
             },
@@ -354,7 +354,7 @@ Singleton {
 
     function downloadHighQuality(image) {
         if (!image) return;
-        const url = image.file_url ?? image.sample_url ?? image.preview_url ?? "";
+        const url = image.file_url || image.sample_url || image.preview_url || "";
         if (!url || url.length === 0) return;
         const base = decodeURIComponent(url.substring(url.lastIndexOf('/') + 1));
         if (base.length === 0) return;

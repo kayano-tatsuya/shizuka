@@ -36,7 +36,12 @@ Item {
     readonly property string imageReferer: root.image?.imageReferer ?? ""
     // Prefer sample_url (medium/full) over preview_url (thumbnail) so the
     // banner isn't stuck with a 150px thumbnail upscaled to 440px.
-    readonly property string remoteThumb: root.image?.sample_url || root.image?.preview_url || root.image?.file_url || ""
+    // For referer-protected hosts we fetch through curl (safe, no QML stall),
+    // so prefer the full-resolution file_url there; otherwise fall back to
+    // sample/preview (direct load, where huge files can stall the loader).
+    readonly property string remoteThumb: (root.imageReferer.length > 0 && (root.image?.file_url || "").length > 0)
+        ? root.image.file_url
+        : (root.image?.sample_url || root.image?.preview_url || root.image?.file_url || "")
     readonly property bool fetchThumb: root.imageReferer.length > 0 && root.remoteThumb.length > 0
     readonly property string thumbCachePath: {
         if (root.remoteThumb.length === 0) return "";
