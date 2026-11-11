@@ -1,13 +1,1 @@
--- Window rules.
---
--- Sourced from hyprland.lua after hyprland/rules.lua, so these are appended
--- to the defaults rather than replacing them. Only read if the file exists.
---
--- This copy in the repo is an EMPTY TEMPLATE. The installer copies it only
--- when ~/.config/hypr/custom/ does not already exist (mode: skip-if-exists),
--- so your own rules are never overwritten by a re-run.
---
--- Uncomment and edit as needed. `hl.rule` mirrors hyprland's `windowrule`:
 
--- hl.rule("Float, match:class:^(pavucontrol)$")
--- hl.rule("Opacity 0.9, match:class:^(firefox)$")

@@ -1,18 +1,6 @@
--- Custom general settings.
---
--- Sourced from hyprland.lua AFTER hyprland/general.lua, so anything set here
--- wins over the defaults. The file is only read if it exists.
---
--- This copy in the repo is an EMPTY TEMPLATE. The installer copies it only
--- when ~/.config/hypr/custom/ does not already exist (mode: skip-if-exists in
--- sdata/subcmd-install/3.files-exp.yaml), so anything you write here on your
--- own machine is never overwritten by a re-run.
---
--- Uncomment and edit as needed:
-
--- hl.config({
---   input = {
---     accel_profile = "flat",
---     sensitivity = 0,
---   },
--- })
+hl.config({
+  input = {
+    accel_profile = "flat",
+    sensitivity = 0,
+  },
+})

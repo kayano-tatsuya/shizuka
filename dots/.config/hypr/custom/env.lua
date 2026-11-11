@@ -1,12 +1,9 @@
--- Environment variables.
---
--- Sourced from hyprland.lua before any other config, so use this for
--- variables the rest of the config reads. Only read if the file exists.
---
--- This copy in the repo is an EMPTY TEMPLATE. The installer copies it only
--- when ~/.config/hypr/custom/ does not already exist (mode: skip-if-exists),
--- so your own values are never overwritten by a re-run.
---
--- Uncomment and edit as needed:
-
--- hl.variable("MYAPP_CONFIG", "/path/to/config")
+-- Custom environment variables (user overrides)
+-- Cursor theme: Hyprland's own cursor uses hyprcursor (HYPRCURSOR_*), set at
+-- compositor launch. XCURSOR_* covers XWayland / legacy apps. Without these,
+-- Hyprland boots with the fallback default cursor until (and despite)
+-- `hyprctl setcursor` in execs.lua.
+hl.env("HYPRCURSOR_THEME", "Bibata-Modern-Classic")
+hl.env("HYPRCURSOR_SIZE", "24")
+hl.env("XCURSOR_THEME", "Bibata-Modern-Classic")
+hl.env("XCURSOR_SIZE", "24")

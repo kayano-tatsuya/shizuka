@@ -1,12 +1,1 @@
--- Keybind variables.
---
--- Sourced from hyprland/keybinds.lua, so values defined here are available to
--- every binding in the default keybinds. Only read if the file exists.
---
--- This copy in the repo is an EMPTY TEMPLATE. The installer copies it only
--- when ~/.config/hypr/custom/ does not already exist (mode: skip-if-exists),
--- so your own values are never overwritten by a re-run.
---
--- Uncomment and edit as needed:
 
--- hl.variable("term", "kitty")

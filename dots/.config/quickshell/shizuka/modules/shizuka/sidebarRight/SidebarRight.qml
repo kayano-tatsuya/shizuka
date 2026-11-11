@@ -60,10 +60,19 @@ Scope {
             GlobalStates.sidebarRightOpen = false;
         }
 
+        // Delay registering as dismissable so the focus grab doesn't activate
+        // (and immediately clear) on a quick tap — that's what made a single
+        // press open then instantly close. ~200ms lets focus settle first.
+        property var dismissTimer: null
         onVisibleChanged: {
             if (visible) {
-                if (!root.pinned) GlobalFocusGrab.addDismissable(panelWindow);
+                if (root.pinned) return;
+                if (dismissTimer) dismissTimer.destroy();
+                dismissTimer = Qt.createQmlObject('import QtQuick; Timer { interval: 200; repeat: false }', panelWindow);
+                dismissTimer.triggered.connect(() => GlobalFocusGrab.addDismissable(panelWindow));
+                dismissTimer.start();
             } else {
+                if (dismissTimer) { dismissTimer.stop(); dismissTimer.destroy(); dismissTimer = null; }
                 GlobalFocusGrab.removeDismissable(panelWindow);
             }
         }

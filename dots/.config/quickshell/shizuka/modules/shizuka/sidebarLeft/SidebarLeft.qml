@@ -234,10 +234,18 @@ Scope { // Scope
                 item: panelWindow.animatedEntrance ? fullMaskArea : sidebarLeftBackground
             }
 
+            // Delay registering as dismissable so a quick tap doesn't immediately
+            // clear the focus grab (which made a single press open then close).
+            property var dismissTimer: null
             onVisibleChanged: {
                 if (visible) {
-                    if (!root.pin) GlobalFocusGrab.addDismissable(panelWindow);
+                    if (root.pin) return;
+                    if (dismissTimer) dismissTimer.destroy();
+                    dismissTimer = Qt.createQmlObject('import QtQuick; Timer { interval: 200; repeat: false }', panelWindow);
+                    dismissTimer.triggered.connect(() => GlobalFocusGrab.addDismissable(panelWindow));
+                    dismissTimer.start();
                 } else {
+                    if (dismissTimer) { dismissTimer.stop(); dismissTimer.destroy(); dismissTimer = null; }
                     GlobalFocusGrab.removeDismissable(panelWindow);
                 }
             }

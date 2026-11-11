@@ -1,6 +1,10 @@
 -- This file sources other files in `hyprland` and `custom` folders
 -- You wanna add your stuff in files in `custom`
-
+hl.config({
+  xwayland = {
+    force_zero_scaling = true
+  }
+})
 -- Internal stuff --
 require("hyprland.lib")
 require("hyprland.services")
