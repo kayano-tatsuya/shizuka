@@ -344,6 +344,12 @@ Scope { // Scope
 
                 Keys.onPressed: (event) => {
                     if (event.key === Qt.Key_Escape) {
+                        const v = root.sidebarContent?.swipeView?.currentItem;
+                        if (v && (v.detailImage ?? null) !== null && typeof v.closeDetail === "function") {
+                            v.closeDetail();
+                            event.accepted = true;
+                            return;
+                        }
                         panelWindow.hide();
                     }
                     if (event.modifiers & Qt.ControlModifier) {
